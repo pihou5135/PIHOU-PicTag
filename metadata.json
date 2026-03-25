@@ -1,0 +1,5 @@
+{
+  "name": "PicTag 批量水印工具",
+  "description": "一个专业的图片批量加标签工具，支持思源黑体自定义字体样式、批量上传与导出，且保持原图尺寸不变。",
+  "requestFramePermissions": []
+}
