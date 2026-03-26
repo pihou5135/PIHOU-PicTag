@@ -68,7 +68,8 @@ const App: React.FC = () => {
           settings, 
           imgItem.offsetX, 
           imgItem.offsetY,
-          imgItem.scale
+          imgItem.scale,
+          imgItem.file.type
         );
         
         updatedImages[i] = {
@@ -96,7 +97,14 @@ const App: React.FC = () => {
     const zip = new JSZip();
     doneImages.forEach((img, idx) => {
       const base64Data = img.processedUrl!.split(',')[1];
-      zip.file(`tagged_${img.file.name}`, base64Data, { base64: true });
+      const mimeType = img.processedUrl!.split(';')[0].split(':')[1];
+      const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png';
+      
+      // Remove original extension and add new one
+      const lastDotIndex = img.file.name.lastIndexOf('.');
+      const baseName = lastDotIndex !== -1 ? img.file.name.substring(0, lastDotIndex) : img.file.name;
+      
+      zip.file(`${baseName}.${extension}`, base64Data, { base64: true });
     });
 
     const content = await zip.generateAsync({ type: 'blob' });

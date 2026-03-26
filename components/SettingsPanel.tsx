@@ -2,7 +2,8 @@
 import React from 'react';
 import { TagSettings } from '../types';
 import { FONT_WEIGHTS } from '../constants';
-import { Type, Move, Palette, TextCursorInput, Save, RefreshCw, Info, Image as ImageIcon, Upload, Trash2 } from 'lucide-react';
+import { Type, Move, Palette, TextCursorInput, Save, RefreshCw, Info, Image as ImageIcon, Upload, Trash2, Maximize2, Check, X } from 'lucide-react';
+import { Preset } from '../types';
 
 interface SettingsPanelProps {
   settings: TagSettings;
@@ -17,25 +18,55 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onApplyAll,
   isProcessing 
 }) => {
+  const [presets, setPresets] = React.useState<Preset[]>([]);
+  const [newPresetName, setNewPresetName] = React.useState('');
+  const [showPresetInput, setShowPresetInput] = React.useState(false);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('pictag_presets');
+    if (saved) {
+      try {
+        setPresets(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load presets", e);
+      }
+    }
+  }, []);
+
+  const savePresetsToStorage = (newPresets: Preset[]) => {
+    localStorage.setItem('pictag_presets', JSON.stringify(newPresets));
+    setPresets(newPresets);
+  };
+
   const handleChange = (key: keyof TagSettings, value: any) => {
-    setSettings({ ...settings, [key]: value });
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleNumberChange = (key: keyof TagSettings, value: string) => {
+    const num = parseInt(value);
+    handleChange(key, isNaN(num) ? 0 : num);
   };
 
   const handleSavePreset = () => {
-    localStorage.setItem('pictag_preset', JSON.stringify(settings));
-    alert('预设已保存到本地！');
+    if (!newPresetName.trim()) return;
+    const newPreset: Preset = {
+      id: Date.now().toString(),
+      name: newPresetName.trim(),
+      settings: { ...settings }
+    };
+    const updatedPresets = [...presets, newPreset];
+    savePresetsToStorage(updatedPresets);
+    setNewPresetName('');
+    setShowPresetInput(false);
   };
 
-  const handleLoadPreset = () => {
-    const saved = localStorage.getItem('pictag_preset');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSettings({ ...settings, ...parsed });
-      } catch (e) {
-        console.error("Failed to parse preset", e);
-      }
-    }
+  const handleLoadPreset = (preset: Preset) => {
+    setSettings({ ...settings, ...preset.settings });
+  };
+
+  const deletePreset = (id: string) => {
+    const updatedPresets = presets.filter(p => p.id !== id);
+    savePresetsToStorage(updatedPresets);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,8 +92,28 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </div>
 
       <div className="space-y-4">
+        {/* Watermark Toggles */}
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+          <button
+            onClick={() => handleChange('enableTextWatermark', !settings.enableTextWatermark)}
+            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+              settings.enableTextWatermark ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <TextCursorInput className="w-3.5 h-3.5" /> 文字
+          </button>
+          <button
+            onClick={() => handleChange('enableImageWatermark', !settings.enableImageWatermark)}
+            className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+              settings.enableImageWatermark ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> 图片
+          </button>
+        </div>
+
         {/* Text Content */}
-        <div>
+        <div className={settings.enableTextWatermark ? 'block' : 'opacity-40 pointer-events-none'}>
           <label className="block text-sm font-medium text-gray-700 mb-1">标签文本</label>
           <textarea
             value={settings.text}
@@ -83,8 +134,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               type="number"
               min="1"
               max="1000"
-              value={settings.fontSize}
-              onChange={(e) => handleChange('fontSize', parseInt(e.target.value) || 0)}
+              value={settings.fontSize || ''}
+              onChange={(e) => handleNumberChange('fontSize', e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -126,7 +177,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
 
         {/* Image Watermark */}
-        <div className="pt-4 border-t border-gray-100">
+        <div className={`pt-4 border-t border-gray-100 ${settings.enableImageWatermark ? 'block' : 'opacity-40 pointer-events-none'}`}>
           <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-3">
             <ImageIcon className="w-4 h-4" /> 图片水印
           </label>
@@ -210,8 +261,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <span className="text-xs text-gray-500 block mb-1">左边距 (X)</span>
               <input
                 type="number"
-                value={settings.marginX}
-                onChange={(e) => handleChange('marginX', parseInt(e.target.value) || 0)}
+                value={settings.marginX || ''}
+                onChange={(e) => handleNumberChange('marginX', e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -219,8 +270,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <span className="text-xs text-gray-500 block mb-1">底边距 (Y)</span>
               <input
                 type="number"
-                value={settings.marginY}
-                onChange={(e) => handleChange('marginY', parseInt(e.target.value) || 0)}
+                value={settings.marginY || ''}
+                onChange={(e) => handleNumberChange('marginY', e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -236,7 +287,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <input
               type="checkbox"
               checked={settings.enableCrop}
-              onChange={(e) => handleChange('enableCrop', e.target.checked)}
+              onChange={(e) => {
+                handleChange('enableCrop', e.target.checked);
+                if (e.target.checked) handleChange('enableResize', false);
+              }}
               className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
             />
           </div>
@@ -247,8 +301,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <span className="text-xs text-gray-500 block mb-1">宽度 (W)</span>
                 <input
                   type="number"
-                  value={settings.cropWidth}
-                  onChange={(e) => handleChange('cropWidth', parseInt(e.target.value) || 0)}
+                  value={settings.cropWidth || ''}
+                  onChange={(e) => handleNumberChange('cropWidth', e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -256,8 +310,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <span className="text-xs text-gray-500 block mb-1">高度 (H)</span>
                 <input
                   type="number"
-                  value={settings.cropHeight}
-                  onChange={(e) => handleChange('cropHeight', parseInt(e.target.value) || 0)}
+                  value={settings.cropHeight || ''}
+                  onChange={(e) => handleNumberChange('cropHeight', e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -266,6 +320,103 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           {settings.enableCrop && (
             <p className="text-[10px] text-gray-400 mt-2">
               开启后，可在图片卡片上拖拽或使用方向键调整位置。
+            </p>
+          )}
+        </div>
+
+        {/* Resize Settings */}
+        <div className="pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+              <Maximize2 className="w-4 h-4" /> 调整图片尺寸
+            </label>
+            <input
+              type="checkbox"
+              checked={settings.enableResize}
+              onChange={(e) => {
+                handleChange('enableResize', e.target.checked);
+                if (e.target.checked) handleChange('enableCrop', false);
+              }}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+          </div>
+          
+          {settings.enableResize && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs text-gray-500 block mb-1">目标宽度</span>
+                  <input
+                    type="number"
+                    value={settings.resizeWidth || ''}
+                    onChange={(e) => handleNumberChange('resizeWidth', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 block mb-1">目标高度</span>
+                  <input
+                    type="number"
+                    value={settings.resizeHeight || ''}
+                    onChange={(e) => handleNumberChange('resizeHeight', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.maintainAspectRatio}
+                  onChange={(e) => handleChange('maintainAspectRatio', e.target.checked)}
+                  className="w-3.5 h-3.5 text-blue-600 rounded"
+                />
+                保持宽高比 (等比例缩放)
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* Format Settings */}
+        <div className="pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+              <RefreshCw className="w-4 h-4" /> 目标导出格式
+            </label>
+            <input
+              type="checkbox"
+              checked={settings.enableFormatConversion}
+              onChange={(e) => handleChange('enableFormatConversion', e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+          </div>
+          
+          {settings.enableFormatConversion && (
+            <div className="flex gap-2 animate-in fade-in slide-in-from-top-2">
+              <button
+                onClick={() => handleChange('targetFormat', 'image/jpeg')}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  settings.targetFormat === 'image/jpeg' 
+                    ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                JPG
+              </button>
+              <button
+                onClick={() => handleChange('targetFormat', 'image/png')}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  settings.targetFormat === 'image/png' 
+                    ? 'bg-blue-50 border-blue-200 text-blue-600' 
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                PNG
+              </button>
+            </div>
+          )}
+          {settings.enableFormatConversion && (
+            <p className="text-[10px] text-gray-400 mt-2">
+              开启后，所有图片将统一转换为所选格式导出（无损画质）。
             </p>
           )}
         </div>
@@ -279,20 +430,65 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </div>
 
       <div className="mt-auto pt-6 space-y-3">
-        <div className="flex gap-2">
+        {/* Presets List */}
+        {presets.length > 0 && (
+          <div className="space-y-2 mb-4">
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">已保存预设</label>
+            <div className="max-h-32 overflow-y-auto space-y-1 pr-1">
+              {presets.map(p => (
+                <div key={p.id} className="group flex items-center justify-between p-2 bg-slate-50 hover:bg-blue-50 rounded-md border border-slate-200 transition-colors">
+                  <button 
+                    onClick={() => handleLoadPreset(p)}
+                    className="flex-1 text-left text-xs font-medium text-slate-700 truncate"
+                  >
+                    {p.name}
+                  </button>
+                  <button 
+                    onClick={() => deletePreset(p.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-all"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {showPresetInput ? (
+          <div className="flex flex-col gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in zoom-in-95">
+            <input
+              autoFocus
+              type="text"
+              value={newPresetName}
+              onChange={(e) => setNewPresetName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+              placeholder="预设名称..."
+              className="w-full px-3 py-1.5 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSavePreset}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                <Check className="w-3 h-3" /> 确定
+              </button>
+              <button
+                onClick={() => setShowPresetInput(false)}
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs bg-slate-200 text-slate-700 rounded hover:bg-slate-300"
+              >
+                <X className="w-3 h-3" /> 取消
+              </button>
+            </div>
+          </div>
+        ) : (
           <button
-            onClick={handleSavePreset}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+            onClick={() => setShowPresetInput(true)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
           >
-            <Save className="w-4 h-4" /> 保存预设
+            <Save className="w-4 h-4" /> 保存当前为预设
           </button>
-          <button
-            onClick={handleLoadPreset}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" /> 加载预设
-          </button>
-        </div>
+        )}
         
         <button
           onClick={onApplyAll}

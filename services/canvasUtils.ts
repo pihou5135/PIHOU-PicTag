@@ -22,7 +22,8 @@ export const processImageWithWatermark = async (
   settings: TagSettings,
   offsetX: number = 0,
   offsetY: number = 0,
-  scale: number = 1.0
+  scale: number = 1.0,
+  originalFormat: string = 'image/jpeg'
 ): Promise<string> => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -30,13 +31,25 @@ export const processImageWithWatermark = async (
   if (!ctx) throw new Error('Canvas context not found');
 
   // Set canvas size
+  let finalWidth = imageElement.width;
+  let finalHeight = imageElement.height;
+
   if (settings.enableCrop) {
-    canvas.width = settings.cropWidth;
-    canvas.height = settings.cropHeight;
-  } else {
-    canvas.width = imageElement.width;
-    canvas.height = imageElement.height;
+    finalWidth = settings.cropWidth;
+    finalHeight = settings.cropHeight;
+  } else if (settings.enableResize) {
+    if (settings.maintainAspectRatio) {
+      const ratio = Math.min(settings.resizeWidth / imageElement.width, settings.resizeHeight / imageElement.height);
+      finalWidth = imageElement.width * ratio;
+      finalHeight = imageElement.height * ratio;
+    } else {
+      finalWidth = settings.resizeWidth;
+      finalHeight = settings.resizeHeight;
+    }
   }
+
+  canvas.width = finalWidth;
+  canvas.height = finalHeight;
 
   // Ensure the specific font weight and size is loaded before drawing
   const fontString = `${settings.fontWeight} ${settings.fontSize}px "Noto Sans SC"`;
@@ -57,6 +70,8 @@ export const processImageWithWatermark = async (
     const drawX = (canvas.width - scaledWidth) / 2 + offsetX;
     const drawY = (canvas.height - scaledHeight) / 2 + offsetY;
     ctx.drawImage(imageElement, drawX, drawY, scaledWidth, scaledHeight);
+  } else if (settings.enableResize) {
+    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
   } else {
     ctx.drawImage(imageElement, 0, 0);
   }
@@ -89,12 +104,12 @@ export const processImageWithWatermark = async (
     textToDraw = '* ' + textToDraw;
   }
 
-  if (textToDraw) {
+  if (settings.enableTextWatermark && textToDraw) {
     ctx.fillText(textToDraw, x, y);
   }
 
   // Draw image watermark if provided
-  if (settings.watermarkImage) {
+  if (settings.enableImageWatermark && settings.watermarkImage) {
     try {
       const wmImg = await loadImage(settings.watermarkImage);
       
@@ -141,7 +156,8 @@ export const processImageWithWatermark = async (
     }
   }
 
-  return canvas.toDataURL('image/jpeg', 1.0);
+  const format = settings.enableFormatConversion ? settings.targetFormat : originalFormat;
+  return canvas.toDataURL(format, 1.0);
 };
 
 /**

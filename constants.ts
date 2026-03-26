@@ -22,8 +22,18 @@ export const DEFAULT_SETTINGS: TagSettings = {
   watermarkOpacity: 1,
   watermarkScale: 1,
   watermarkPosition: 'bottom-right',
+  // Toggles
+  enableTextWatermark: true,
+  enableImageWatermark: true,
   // Default crop settings
   enableCrop: false,
   cropWidth: 1080,
-  cropHeight: 1080
+  cropHeight: 1080,
+  // Default resize settings
+  enableResize: false,
+  resizeWidth: 1920,
+  resizeHeight: 1080,
+  maintainAspectRatio: true,
+  enableFormatConversion: false,
+  targetFormat: 'image/jpeg',
 };

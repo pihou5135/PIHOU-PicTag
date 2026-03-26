@@ -201,11 +201,21 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-gray-500">
-            {settings.enableCrop ? `${settings.cropWidth} × ${settings.cropHeight}` : `${image.width} × ${image.height}`} px
+            {settings.enableCrop 
+              ? `${settings.cropWidth} × ${settings.cropHeight}` 
+              : settings.enableResize 
+                ? `${settings.resizeWidth} × ${settings.resizeHeight}${settings.maintainAspectRatio ? ' (等比)' : ''}`
+                : `${image.width} × ${image.height}`} px
           </span>
           {image.processedUrl && (
             <button
-              onClick={() => downloadUrl(image.processedUrl!, `tagged_${image.file.name}`)}
+              onClick={() => {
+                const mimeType = image.processedUrl!.split(';')[0].split(':')[1];
+                const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png';
+                const lastDotIndex = image.file.name.lastIndexOf('.');
+                const baseName = lastDotIndex !== -1 ? image.file.name.substring(0, lastDotIndex) : image.file.name;
+                downloadUrl(image.processedUrl!, `${baseName}.${extension}`);
+              }}
               className="text-blue-500 hover:text-blue-700 p-1"
               title="单独下载"
             >
