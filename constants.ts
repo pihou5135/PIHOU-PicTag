@@ -36,4 +36,6 @@ export const DEFAULT_SETTINGS: TagSettings = {
   maintainAspectRatio: true,
   enableFormatConversion: false,
   targetFormat: 'image/jpeg',
+  enableSizeLimit: false,
+  maxFileSizeMB: 10,
 };

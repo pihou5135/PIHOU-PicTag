@@ -27,6 +27,9 @@ export interface TagSettings {
   // New format settings
   enableFormatConversion: boolean;
   targetFormat: 'image/jpeg' | 'image/png';
+  // New size limit settings
+  enableSizeLimit: boolean;
+  maxFileSizeMB: number;
 }
 
 export interface Preset {

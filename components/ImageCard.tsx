@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ImageFile, TagSettings } from '../types';
 import { X, CheckCircle, Clock, AlertCircle, Download, Move, ZoomIn, ZoomOut } from 'lucide-react';
-import { downloadUrl } from '../services/canvasUtils';
+import { downloadUrl, getByteSizeOfDataUrl } from '../services/canvasUtils';
 
 interface ImageCardProps {
   image: ImageFile;
@@ -16,6 +16,21 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+  const getFormattedSize = () => {
+    if (image.processedUrl) {
+      const bytes = getByteSizeOfDataUrl(image.processedUrl);
+      if (bytes > 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      }
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    const origBytes = image.file.size;
+    if (origBytes > 1024 * 1024) {
+      return `${(origBytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    return `${(origBytes / 1024).toFixed(1)} KB`;
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!settings.enableCrop) return;
@@ -200,13 +215,18 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-gray-500">
-            {settings.enableCrop 
-              ? `${settings.cropWidth} × ${settings.cropHeight}` 
-              : settings.enableResize 
-                ? `${settings.resizeWidth} × ${settings.resizeHeight}${settings.maintainAspectRatio ? ' (等比)' : ''}`
-                : `${image.width} × ${image.height}`} px
-          </span>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-[10px] text-gray-500 truncate">
+              {settings.enableCrop 
+                ? `${settings.cropWidth} × ${settings.cropHeight}` 
+                : settings.enableResize 
+                  ? `${settings.resizeWidth} × ${settings.resizeHeight}${settings.maintainAspectRatio ? ' (等比)' : ''}`
+                  : `${image.width} × ${image.height}`} px
+            </span>
+            <span className="text-[9px] font-mono text-gray-450">
+              大小: {getFormattedSize()}
+            </span>
+          </div>
           {image.processedUrl && (
             <button
               onClick={() => {

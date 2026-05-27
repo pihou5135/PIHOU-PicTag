@@ -2,6 +2,17 @@
 import { TagSettings } from '../types';
 
 /**
+ * Calculates the exact binary size of a base64 encoded data URL in bytes
+ */
+export const getByteSizeOfDataUrl = (dataUrl: string): number => {
+  const parts = dataUrl.split(',');
+  if (parts.length < 2) return 0;
+  const str = parts[1];
+  const padding = str.endsWith('==') ? 2 : (str.endsWith('=') ? 1 : 0);
+  return (str.length * 0.75) - padding;
+};
+
+/**
  * Loads an image from a URL or File
  */
 export const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -157,7 +168,51 @@ export const processImageWithWatermark = async (
   }
 
   const format = settings.enableFormatConversion ? settings.targetFormat : originalFormat;
-  return canvas.toDataURL(format, 1.0);
+  let currentDataUrl = canvas.toDataURL(format, 1.0);
+
+  if (settings.enableSizeLimit) {
+    const maxBytes = settings.maxFileSizeMB * 1024 * 1024;
+    let currentBytes = getByteSizeOfDataUrl(currentDataUrl);
+
+    if (currentBytes > maxBytes) {
+      let scale = 0.95;
+      let iterations = 0;
+      const maxIterations = 8;
+      let jpegQuality = 1.0;
+
+      // For JPEGs, lowering quality slightly first is highly effective to keep resolution 100%
+      if (format === 'image/jpeg') {
+        jpegQuality = 0.92;
+        currentDataUrl = canvas.toDataURL(format, jpegQuality);
+        currentBytes = getByteSizeOfDataUrl(currentDataUrl);
+      }
+
+      // If still too big, scale down the dimensions proportionally (等比压缩尺寸)
+      while (currentBytes > maxBytes && iterations < maxIterations && scale > 0.15) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = Math.max(10, Math.round(canvas.width * scale));
+        tempCanvas.height = Math.max(10, Math.round(canvas.height * scale));
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.imageSmoothingEnabled = true;
+          tempCtx.imageSmoothingQuality = 'high';
+          tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+          currentDataUrl = tempCanvas.toDataURL(format, jpegQuality);
+          currentBytes = getByteSizeOfDataUrl(currentDataUrl);
+        }
+
+        const ratio = maxBytes / currentBytes;
+        if (ratio < 1) {
+          scale = scale * Math.max(0.4, Math.min(0.92, Math.sqrt(ratio) * 0.97));
+        } else {
+          break;
+        }
+        iterations++;
+      }
+    }
+  }
+
+  return currentDataUrl;
 };
 
 /**

@@ -2,7 +2,7 @@
 import React from 'react';
 import { TagSettings } from '../types';
 import { FONT_WEIGHTS } from '../constants';
-import { Type, Move, Palette, TextCursorInput, Save, RefreshCw, Info, Image as ImageIcon, Upload, Trash2, Maximize2, Check, X } from 'lucide-react';
+import { Type, Move, Palette, TextCursorInput, Save, RefreshCw, Info, Image as ImageIcon, Upload, Trash2, Maximize2, Check, X, Scale } from 'lucide-react';
 import { Preset } from '../types';
 
 interface SettingsPanelProps {
@@ -44,6 +44,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const handleNumberChange = (key: keyof TagSettings, value: string) => {
     const num = parseInt(value);
+    handleChange(key, isNaN(num) ? 0 : num);
+  };
+
+  const handleFloatChange = (key: keyof TagSettings, value: string) => {
+    const num = parseFloat(value);
     handleChange(key, isNaN(num) ? 0 : num);
   };
 
@@ -418,6 +423,46 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <p className="text-[10px] text-gray-400 mt-2">
               开启后，所有图片将统一转换为所选格式导出（无损画质）。
             </p>
+          )}
+        </div>
+
+        {/* File Size Limit & Proportional Compression Settings */}
+        <div className="pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+              <Scale className="w-4 h-4 text-blue-500" /> 批量等比例限重 (MB)
+            </label>
+            <input
+              type="checkbox"
+              checked={settings.enableSizeLimit}
+              onChange={(e) => handleChange('enableSizeLimit', e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
+          
+          {settings.enableSizeLimit && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+              <div>
+                <span className="text-xs text-gray-500 block mb-1">目标最高单张大小</span>
+                <div className="relative rounded-lg shadow-sm">
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    value={settings.maxFileSizeMB || ''}
+                    onChange={(e) => handleFloatChange('maxFileSizeMB', e.target.value)}
+                    className="w-full px-3 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="例如 10"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm font-mono">MB</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-amber-600 bg-amber-50/70 p-2.5 rounded-lg border border-amber-100 leading-relaxed">
+                <b>等比压缩原理：</b>如果生成图片超过了指定的大小，系统将通过<b>智能比例阶梯算法等比压缩图片分辨率</b>。通过逐级等比微调，在保持极致清晰度、画面不破裂、不变形的前提下，使最终导出的文件严格低于设定限制（如10MB）。
+              </p>
+            </div>
           )}
         </div>
 
