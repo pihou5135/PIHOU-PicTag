@@ -4,6 +4,8 @@ import { ImageFile, TagSettings } from '../types';
 import { X, CheckCircle, Clock, AlertCircle, Download, Move, ZoomIn, ZoomOut } from 'lucide-react';
 import { downloadUrl, getByteSizeOfDataUrl } from '../services/canvasUtils';
 
+import { getExportFilename } from '../services/exportUtils';
+
 interface ImageCardProps {
   image: ImageFile;
   settings: TagSettings;
@@ -230,11 +232,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
           {image.processedUrl && (
             <button
               onClick={() => {
-                const mimeType = image.processedUrl!.split(';')[0].split(':')[1];
-                const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png';
-                const lastDotIndex = image.file.name.lastIndexOf('.');
-                const baseName = lastDotIndex !== -1 ? image.file.name.substring(0, lastDotIndex) : image.file.name;
-                downloadUrl(image.processedUrl!, `${baseName}.${extension}`);
+                downloadUrl(image.processedUrl!, getExportFilename(image.file.name, image.processedUrl!));
               }}
               className="text-blue-500 hover:text-blue-700 p-1"
               title="单独下载"

@@ -6,6 +6,7 @@ import JSZip from 'jszip';
 import { TagSettings, ImageFile } from './types';
 import { DEFAULT_SETTINGS } from './constants';
 import { loadImage, processImageWithWatermark } from './services/canvasUtils';
+import { getExportFilename, getUniqueExportFilename } from './services/exportUtils';
 import SettingsPanel from './components/SettingsPanel';
 import ImageCard from './components/ImageCard';
 
@@ -95,16 +96,14 @@ const App: React.FC = () => {
     }
 
     const zip = new JSZip();
-    doneImages.forEach((img, idx) => {
+    const usedNames = new Set<string>();
+    doneImages.forEach((img) => {
       const base64Data = img.processedUrl!.split(',')[1];
-      const mimeType = img.processedUrl!.split(';')[0].split(':')[1];
-      const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png';
-      
-      // Remove original extension and add new one
-      const lastDotIndex = img.file.name.lastIndexOf('.');
-      const baseName = lastDotIndex !== -1 ? img.file.name.substring(0, lastDotIndex) : img.file.name;
-      
-      zip.file(`${baseName}.${extension}`, base64Data, { base64: true });
+      const filename = getUniqueExportFilename(
+        getExportFilename(img.file.name, img.processedUrl!),
+        usedNames
+      );
+      zip.file(filename, base64Data, { base64: true });
     });
 
     const content = await zip.generateAsync({ type: 'blob' });
