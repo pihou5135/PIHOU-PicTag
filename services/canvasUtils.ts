@@ -1,5 +1,6 @@
 
-import { TagSettings } from '../types';
+import type { TagSettings } from '../types';
+import { getImageGeometry } from './coverage.ts';
 
 /**
  * Calculates the exact binary size of a base64 encoded data URL in bytes
@@ -41,26 +42,11 @@ export const processImageWithWatermark = async (
 
   if (!ctx) throw new Error('Canvas context not found');
 
-  // Set canvas size
-  let finalWidth = imageElement.width;
-  let finalHeight = imageElement.height;
-
-  if (settings.enableCrop) {
-    finalWidth = settings.cropWidth;
-    finalHeight = settings.cropHeight;
-  } else if (settings.enableResize) {
-    if (settings.maintainAspectRatio) {
-      const ratio = Math.min(settings.resizeWidth / imageElement.width, settings.resizeHeight / imageElement.height);
-      finalWidth = imageElement.width * ratio;
-      finalHeight = imageElement.height * ratio;
-    } else {
-      finalWidth = settings.resizeWidth;
-      finalHeight = settings.resizeHeight;
-    }
-  }
-
-  canvas.width = finalWidth;
-  canvas.height = finalHeight;
+  const geometry = getImageGeometry(
+    imageElement.width, imageElement.height, settings, offsetX, offsetY, scale,
+  );
+  canvas.width = geometry.canvasWidth;
+  canvas.height = geometry.canvasHeight;
 
   // Ensure the specific font weight and size is loaded before drawing
   const fontString = `${settings.fontWeight} ${settings.fontSize}px "Noto Sans SC"`;
@@ -74,18 +60,9 @@ export const processImageWithWatermark = async (
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   
-  if (settings.enableCrop) {
-    // Draw image centered in cropped canvas with offset and scale
-    const scaledWidth = imageElement.width * scale;
-    const scaledHeight = imageElement.height * scale;
-    const drawX = (canvas.width - scaledWidth) / 2 + offsetX;
-    const drawY = (canvas.height - scaledHeight) / 2 + offsetY;
-    ctx.drawImage(imageElement, drawX, drawY, scaledWidth, scaledHeight);
-  } else if (settings.enableResize) {
-    ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.drawImage(imageElement, 0, 0);
-  }
+  ctx.drawImage(
+    imageElement, geometry.drawX, geometry.drawY, geometry.drawWidth, geometry.drawHeight,
+  );
 
   // Configure text style
   ctx.font = fontString;

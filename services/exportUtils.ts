@@ -21,3 +21,20 @@ export const getUniqueExportFilename = (filename: string, usedNames: Set<string>
   usedNames.add(candidate.toLowerCase());
   return candidate;
 };
+
+/** Build the actual export list, sharing MIME naming between single and ZIP downloads. */
+export const getExportEntries = (images: ReadonlyArray<{
+  file: { name: string };
+  processedUrl: string | null;
+  status: string;
+}>) => {
+  const usedNames = new Set<string>();
+  return images.filter(image => image.status === 'done' && image.processedUrl).map(image => {
+    const url = image.processedUrl!;
+    return {
+      url,
+      filename: getUniqueExportFilename(getExportFilename(image.file.name, url), usedNames),
+      base64: url.split(',')[1],
+    };
+  });
+};

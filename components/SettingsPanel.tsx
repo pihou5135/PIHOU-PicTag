@@ -7,7 +7,7 @@ import { Preset } from '../types';
 
 interface SettingsPanelProps {
   settings: TagSettings;
-  setSettings: (settings: TagSettings) => void;
+  setSettings: React.Dispatch<React.SetStateAction<TagSettings>>;
   onApplyAll: () => void;
   isProcessing: boolean;
 }

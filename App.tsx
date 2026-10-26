@@ -5,18 +5,28 @@ import { Upload, Download, Trash2, Image as ImageIcon } from 'lucide-react';
 import JSZip from 'jszip';
 import { TagSettings, ImageFile } from './types';
 import { DEFAULT_SETTINGS } from './constants';
-import { loadImage, processImageWithWatermark } from './services/canvasUtils';
-import { getExportFilename, getUniqueExportFilename } from './services/exportUtils';
+import { downloadUrl, loadImage, processImageWithWatermark } from './services/canvasUtils';
+import { getExportEntries } from './services/exportUtils';
+import { getCoverageIssues } from './services/exportChecks';
+import CoverageDialog from './components/CoverageDialog';
 import SettingsPanel from './components/SettingsPanel';
 import ImageCard from './components/ImageCard';
+
+type ExportRequest = { kind: 'single' | 'zip'; images: ImageFile[] };
 
 const App: React.FC = () => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [settings, setSettings] = useState<TagSettings>(DEFAULT_SETTINGS);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [pendingExport, setPendingExport] = useState<ExportRequest | null>(null);
+  const pendingExportRef = useRef<ExportRequest | null>(null);
+  const busyRef = useRef(false);
+  const isBusy = isProcessing || isExporting;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (busyRef.current) return;
     const files = e.target.files;
     if (!files) return;
 
@@ -52,7 +62,8 @@ const App: React.FC = () => {
   }, []);
 
   const processAll = async () => {
-    if (images.length === 0) return;
+    if (images.length === 0 || busyRef.current) return;
+    busyRef.current = true;
     setIsProcessing(true);
 
     const updatedImages = [...images];
@@ -85,37 +96,76 @@ const App: React.FC = () => {
       setImages([...updatedImages]);
     }
 
+    busyRef.current = false;
     setIsProcessing(false);
   };
 
-  const handleDownloadAll = async () => {
-    const doneImages = images.filter(img => img.status === 'done' && img.processedUrl);
-    if (doneImages.length === 0) {
+  // Editing invalidates the result so export checks and exported pixels share one state.
+  const updateSettings: React.Dispatch<React.SetStateAction<TagSettings>> = (next) => {
+    if (busyRef.current) return;
+    setSettings(next);
+    setImages(prev => prev.map(img => ({ ...img, status: 'pending', processedUrl: null })));
+  };
+
+  const executeExport = async (request: ExportRequest) => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setIsExporting(true);
+    try {
+      const entries = getExportEntries(request.images);
+      if (request.kind === 'single') {
+        if (entries[0]) downloadUrl(entries[0].url, entries[0].filename);
+      } else {
+        const zip = new JSZip();
+        entries.forEach(entry => zip.file(entry.filename, entry.base64, { base64: true }));
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        try {
+          downloadUrl(url, `PicTag_Export_${Date.now()}.zip`);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to export images:', error);
+      alert('导出失败，请重试');
+    } finally {
+      busyRef.current = false;
+      setIsExporting(false);
+    }
+  };
+
+  const requestExport = (kind: ExportRequest['kind'], id?: string) => {
+    if (busyRef.current || pendingExportRef.current) return;
+    const ready = images.filter(img => img.status === 'done' && img.processedUrl && (!id || img.id === id));
+    if (!ready.length) {
       alert("没有已处理完成的图片可下载，请先点击'应用到所有图片'");
       return;
     }
+    const request = { kind, images: ready };
+    if (getCoverageIssues(ready, settings).length) {
+      pendingExportRef.current = request;
+      setPendingExport(request);
+    } else {
+      void executeExport(request);
+    }
+  };
 
-    const zip = new JSZip();
-    const usedNames = new Set<string>();
-    doneImages.forEach((img) => {
-      const base64Data = img.processedUrl!.split(',')[1];
-      const filename = getUniqueExportFilename(
-        getExportFilename(img.file.name, img.processedUrl!),
-        usedNames
-      );
-      zip.file(filename, base64Data, { base64: true });
-    });
+  const cancelExport = () => {
+    pendingExportRef.current = null;
+    setPendingExport(null);
+  };
 
-    const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `PicTag_Export_${new Date().getTime()}.zip`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const confirmExport = () => {
+    // Consume before starting async ZIP work; repeated clicks cannot export twice.
+    const request = pendingExportRef.current;
+    if (!request) return;
+    cancelExport();
+    void executeExport(request);
   };
 
   const removeImage = (id: string) => {
+    if (busyRef.current) return;
     setImages(prev => {
       const filtered = prev.filter(img => img.id !== id);
       const removed = prev.find(img => img.id === id);
@@ -125,18 +175,21 @@ const App: React.FC = () => {
   };
 
   const updateImageOffset = (id: string, offsetX: number, offsetY: number) => {
+    if (busyRef.current) return;
     setImages(prev => prev.map(img => 
       img.id === id ? { ...img, offsetX, offsetY, status: 'pending', processedUrl: null } : img
     ));
   };
 
   const updateImageScale = (id: string, scale: number) => {
+    if (busyRef.current) return;
     setImages(prev => prev.map(img => 
       img.id === id ? { ...img, scale, status: 'pending', processedUrl: null } : img
     ));
   };
 
   const clearAll = () => {
+    if (busyRef.current) return;
     images.forEach(img => URL.revokeObjectURL(img.previewUrl));
     setImages([]);
   };
@@ -145,12 +198,14 @@ const App: React.FC = () => {
     <div className="flex flex-col md:flex-row h-screen w-full bg-slate-50 text-slate-900 overflow-hidden">
       {/* Sidebar Settings */}
       <aside className="w-full md:w-80 lg:w-96 flex-shrink-0 border-b md:border-b-0">
-        <SettingsPanel 
-          settings={settings} 
-          setSettings={setSettings} 
-          onApplyAll={processAll}
-          isProcessing={isProcessing}
-        />
+        <fieldset disabled={isBusy} className="h-full min-w-0">
+          <SettingsPanel
+            settings={settings}
+            setSettings={updateSettings}
+            onApplyAll={processAll}
+            isProcessing={isProcessing}
+          />
+        </fieldset>
       </aside>
 
       {/* Main Workspace */}
@@ -171,6 +226,7 @@ const App: React.FC = () => {
             {images.length > 0 && (
               <button
                 onClick={clearAll}
+                disabled={isBusy}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" /> 
@@ -179,6 +235,7 @@ const App: React.FC = () => {
             )}
             <button
               onClick={() => fileInputRef.current?.click()}
+              disabled={isBusy}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white hover:bg-slate-700 rounded-lg shadow-sm transition-all"
             >
               <Upload className="w-4 h-4" /> 
@@ -191,14 +248,16 @@ const App: React.FC = () => {
               accept="image/*"
               className="hidden"
               onChange={handleFileUpload}
+              disabled={isBusy}
             />
             {images.some(img => img.status === 'done') && (
               <button
-                onClick={handleDownloadAll}
+                onClick={() => requestExport('zip')}
+                disabled={isBusy}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg shadow-md transition-all animate-in fade-in zoom-in"
               >
                 <Download className="w-4 h-4" /> 
-                <span>批量导出 ZIP</span>
+                <span>{isExporting ? '正在导出…' : '批量导出 ZIP'}</span>
               </button>
             )}
           </div>
@@ -227,6 +286,8 @@ const App: React.FC = () => {
                   onRemove={removeImage} 
                   onUpdateOffset={updateImageOffset}
                   onUpdateScale={updateImageScale}
+                  onDownload={id => requestExport('single', id)}
+                  disabled={isBusy}
                 />
               ))}
             </div>
@@ -253,6 +314,13 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+      {pendingExport && (
+        <CoverageDialog
+          issues={getCoverageIssues(pendingExport.images, settings)}
+          onCancel={cancelExport}
+          onConfirm={confirmExport}
+        />
+      )}
     </div>
   );
 };
