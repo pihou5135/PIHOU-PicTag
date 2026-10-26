@@ -13,7 +13,7 @@
    git rev-parse HEAD
    ```
 2. 核对是否仍为 `pihou5135/PIHOU-PicTag`。读取实际文件，分清已有改动、上次交付未提交内容与本次拟修改内容。保护用户改动，不自动 reset、clean、覆盖、强制拉取或搬动仓库。
-3. **旧副本 `~/Documents/codex-fabu/PIHOU-PicTag` 有 `.gitignore`、`netlify.toml` 未提交改动，尚未迁移或判定应舍弃。首轮已核对并决定不为本地边界提醒迁入部署配置；后续如涉及部署，重新核对用途与授权，不自动合并或覆盖。** 新副本不等于完整生产基线；Netlify 绑定及线上 commit 尚未核实。
+3. **旧副本 `~/Documents/codex-fabu/PIHOU-PicTag` 有 `.gitignore`、`netlify.toml` 未提交改动，尚未迁移或判定应舍弃。首轮已核对并决定不为本地边界提醒迁入部署配置；后续如涉及部署，重新核对用途与授权，不自动合并或覆盖。** 不要未经核实就假定本地与线上相同；本轮已核实的绑定、线上 commit 与回滚点见 STATUS，接手时重新确认。
 4. 若新增了下级 `AGENTS.md` 或 `.agents/skills`，读取对当前文件适用的说明。只读任务相关内容，不读取凭据、环境密钥或无关聊天存储。
 5. 在 `docs/STATUS.md` 的接力状态中写明本轮负责 agent/任务名、目标、分支与起始 HEAD、预期文件范围。无改动的纯咨询可不登记。
 

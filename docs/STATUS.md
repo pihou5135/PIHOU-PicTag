@@ -4,7 +4,7 @@
 
 ## 当前结论
 
-**用户已在本机验收通过，并明确授权同步和部署至现有正式 Netlify 站点；当前处于发布核验阶段。** 后续本地工作使用 `~/PIHOU-PicTag`。Netlify 绑定和线上 commit 未核实，本副本不能视为完整生产基线。
+**用户已在本机验收通过；代码已同步 GitHub，正式站点已发布成功并通过线上浏览器验证。** 后续本地工作使用 `~/PIHOU-PicTag`。已核实 Netlify 绑定本仓库 main，本轮线上代码为 `19df7420b9f5799bcab8e5de0ca90dd448f81e64`；后续记录提交仅更改维护文档。
 
 **本轮已完成旧/新配置核对：旧 `.gitignore` 仅新增 `.netlify` 忽略规则；旧 `netlify.toml` 仅指定 `npm run build` 与 `dist`。不影响本次 Vite 本地开发和测试，决定不为此功能迁移部署配置；两项旧改动仍保留，未判定应舍弃。** 旧副本保留原位，本次没有自动合并、覆盖、清理或搬动。
 
@@ -14,9 +14,9 @@
 | --- | --- | --- |
 | 目录 | `~/PIHOU-PicTag` | `~/Documents/codex-fabu/PIHOU-PicTag` |
 | origin（fetch / push） | `https://github.com/pihou5135/PIHOU-PicTag.git` | 同左 |
-| 分支 | `codex/image-boundary-warning`，尚无远端上游 | `main`，跟踪旧的本地 `origin/main` |
+| 分支 | `main`，跟踪 `origin/main`；本地功能分支保留 | `main`，跟踪旧的本地 `origin/main` |
 | 功能基线 | 起始 `4d8b291`；本轮功能提交 `af75a1a412812b3334f9b34c59f760eb2254152a`；当前 HEAD 以 `git rev-parse HEAD` 为准（接力文档另提交） | `aefde427b42065622b201cd55eb99b7dd4de0a57` |
-| 本地交付 | 功能与测试已保存为本地提交；维护文档与验证证据另提交，未推送 | `.gitignore` 已修改；`netlify.toml` 未跟踪 |
+| 本地交付 | 功能、维护文档与验证证据已推送；收尾记录提交不改变线上代码 | `.gitignore` 已修改；`netlify.toml` 未跟踪 |
 
 初始化时克隆 HEAD 比旧 HEAD 多 2 个已有提交，涉及图片大小限制/压缩与导出命名；两提交共涉及 9 个文件（247 行增加、25 行删除）。这是克隆得到的上游历史，不是本次实现。旧副本未执行 fetch/pull，其远程跟踪引用不代表现在的 GitHub 状态。
 
@@ -40,7 +40,7 @@
 
 构建已有警告：`/index.css` 在构建时不存在，保留到运行时解析。本次未修改此问题。`node_modules/`、`dist/` 由既有规则忽略。
 
-未执行：真实浏览器上传/Canvas 编码、真实 ZIP 下载解压、功能验收、线上与 commit 对照、Netlify 绑定检查、部署。测试包含下载和 ZIP 的替身，只证明已覆盖的逻辑，不能替代这些验证。
+初始化时未执行：真实浏览器上传/Canvas 编码、真实 ZIP 下载解压、功能验收、线上与 commit 对照、Netlify 绑定检查、部署（本轮后续已补做，见下）。测试包含下载和 ZIP 的替身，只证明已覆盖的逻辑，不能替代这些验证。
 
 ## 首轮功能与验证
 
@@ -59,27 +59,34 @@
 
 浏览器场景覆盖默认/恰好铺满、缩小、四向真实拖动、放大后的覆盖余量、拖回立即解除、宽竖源图和输出、响应式布局、复位/换图/裁切开关、透明与白图、混合批量、取消/继续/修正后导出。结果：[机器记录](verification/2026-10-26-boundary/results.json)；截图：[铺满](verification/2026-10-26-boundary/01-covered.png)、[露边提示](verification/2026-10-26-boundary/02-uncovered.png)、[导出确认](verification/2026-10-26-boundary/03-export-confirmation.png)。
 
-测试使用非私密合成图；未测 Safari/Firefox、触屏设备、极大文件或生产环境。独立代码复核另发现基线已有的“补传图片异步解码与批量处理同时发生可能覆盖新列表”问题；未在本轮扩展修复，建议后续单独确认任务，验收时先等上传完成再应用。原 `/index.css` 问题、Netlify 线上匹配仍未处理。历史 WebP/ZIP 命名修复不计为本轮新增修复。
+测试使用非私密合成图；未测 Safari/Firefox、触屏设备、极大文件或生产环境。独立代码复核另发现基线已有的“补传图片异步解码与批量处理同时发生可能覆盖新列表”问题；未在本轮扩展修复，建议后续单独确认任务，验收时先等上传完成再应用。原 `/index.css` 问题未处理；本轮 Netlify 线上匹配已在发布阶段核实。历史 WebP/ZIP 命名修复不计为本轮新增修复。
 
 ## 用户验收与本地服务
 
-**用户已明确回复“我测试了挺好的”，本轮用户验收通过。** 本机地址：[http://127.0.0.1:4173/](http://127.0.0.1:4173/)。按最新授权暂时保留 Vite 开发服务，仅监听 `127.0.0.1:4173`，未开放公网。
+**用户已明确回复“我测试了挺好的”，本轮用户验收通过。** 正式地址：[https://pihou-pictag.netlify.app/](https://pihou-pictag.netlify.app/)。本机验收曾使用 `127.0.0.1:4173`；正式站点验证完成后已停止临时 Vite 服务，从未开放公网。
 
 1. 上传图片，开启“统一裁切尺寸”；设置导出尺寸后缩小/拖动，检查橙色露边和方向提醒。
 2. 点击“应用到所有图片”，分别试单图与 ZIP 下载；验证“返回调整”不下载，“仍然导出”保留有意留白。
 3. 调整回铺满后重新应用，确认下载不再弹窗。也可点卡片“复位”恢复原始缩放及居中位置。
 
-启动命令：`cd ~/PIHOU-PicTag && npm run dev -- --host 127.0.0.1 --port 4173 --strictPort`。当前服务由本 Codex 执行会话临时运行；可让本任务停止，或在对应终端按 Ctrl+C。若会话结束导致服务停止，用上述命令重新启动；要手工定位时先用 `lsof -nP -iTCP:4173 -sTCP:LISTEN` 核对确为该项目的 Vite 进程，再停止该进程，不使用广泛杀进程命令。
+启动命令：`cd ~/PIHOU-PicTag && npm run dev -- --host 127.0.0.1 --port 4173 --strictPort`。当前临时服务已停止。需要本地继续开发时用上述命令启动，在该终端按 Ctrl+C 停止；要手工定位时先用 `lsof -nP -iTCP:4173 -sTCP:LISTEN` 核对确为该项目的 Vite 进程，再停止该进程，不使用广泛杀进程命令。
+
+## 正式发布证据与回滚点
+
+- GitHub 仓库：`pihou5135/PIHOU-PicTag`；发布时远端 `main` 已核实为 `19df7420b9f5799bcab8e5de0ca90dd448f81e64`，由功能提交 `af75a1a` 和维护记录提交 `19df742` 组成。未强推、未创建 PR。
+- Netlify 站点：`pihou-pictag`，site ID `2f09f9aa-d230-4ee3-b7bc-3aa1689350f7`；GitHub 绑定指向上述仓库 `main`；构建 `npm run build`，输出 `dist`，自动构建启用。仅使用现有站点和现有登录，没有修改站点设置。
+- 正式部署：[6adf28f54668e79652ae7e4c](https://app.netlify.com/projects/pihou-pictag/deploys/6adf28f54668e79652ae7e4c)，`ready`，`production`，发布时间 **2026-10-26 10:18:49 UTC**；Netlify `published_deploy.commit_ref` 与 `19df742` 一致。由 GitHub main 推送自动触发，没有重复手动部署。
+- 正式域名上再次完成同一套 10 组 Chrome 浏览器场景、5 次实际 PNG/JPEG/ZIP 下载检查；无页面脚本异常。证据：[生产验证 JSON](verification/2026-10-26-boundary/production-results.json)、[正式站点导出确认截图](verification/2026-10-26-boundary/production-confirmation.png)。
+- 回滚点：上一正式部署 [6ad98564ac3b74535fd9623c](https://app.netlify.com/projects/pihou-pictag/deploys/6ad98564ac3b74535fd9623c)，对应代码 `4d8b29189e9f2e8131f82d97c87c5820ead32ee7`。如用户要求回滚，可在已核实的站点恢复此版本；本轮没有执行回滚。
+- 本轮收尾只更新文档与证据，提交使用 `[skip netlify]`，不改变已验证的运行时代码；线上部署 commit 可能落后于最新的纯文档提交，这是有记录的差异。
 
 ## 同步边界、接力与下一步
 
-用户最新确认流程：本地开发/测试 → 确认不会自动部署后同步独立功能分支 → 用户验收 → 另行确认才合并/部署。**最新授权已覆盖先前暂停发布限制：用户验收通过，明确要求同步并部署到现有正式站点。允许本轮同步/发布，不授权新站点、付费、凭据变更或无关设置修改。当前尚在目标核验阶段。**
+用户确认暂按“本地开发/测试 → 安全同步功能分支 → 用户验收 → 明确批准合并/部署”执行。本轮先暂停部署，后在用户明确说“我测试了挺好的，接下来直接同步部署到服务器”后才发布；该批准不自动延伸到未来版本、付费、新凭据或无关设置。
 
-只读证据：GitHub `main` 的 `.github/workflows` 查询返回 404，Actions runs 为 0；没有可用的 Netlify 云端读取接口，实际站点绑定、生产分支、branch deploy、Deploy Preview、build hooks 和自动构建设置尚未核实。这些结果不足以证明过去“只同步、不部署”的安全条件；因此当时保持未推送。现在用户已明确授权本轮部署，仍在通过 Netlify CLI 核实目标站点与发布状态。提交中的 `[skip netlify]` 仅额外保护，不代替云端核查。不得自行关闭自动发布。本轮未推送的功能提交已改用经 GitHub 身份与上游提交核实的账号 noreply 身份，避免公开本机自动邮箱；没有修改全局 Git 配置。
+早期因没有 Netlify connector、不能证明分支推送不会部署而未 push。之后在用户批准部署后，用官方 CLI 核实目标、现有登录、生产分支和发布状态，阻塞已解除。旧 CLI 缓存损坏，使用临时缓存运行同版本官方 CLI；未全局安装或改系统设置。Git 使用与已核实 GitHub 账号和上游一致的 noreply 身份；未改变全局 Git 配置。
 
-本轮分工已完成：协调 agent 负责 App/导出与集成验证；coverage_geometry 负责共用几何、Canvas 和单测；coverage_ui 负责预览与弹窗；只读复核 agent 检查代码与远端触发证据。没有进行中的文件占用。
-
-下一位先按 AGENTS 读取实时 Git，保留本轮本地提交；用户验收已通过，当前完成已获批准的同步/发布及线上核验；后续新的变更仍按流程逐轮授权。旧副本继续保留，不能为推进同步而覆盖其配置。不要重复创建侧栏项目或绕过先前 UI 拒绝。
+本轮分工已完成，没有进行中的文件占用。协调 agent 负责 App/导出、集成测试和发布；geometry/UI agent 各自完成共用几何与界面；只读复核 agent 检查代码及远端证据。下一位先读实时 Git、此状态和最近迭代，再接新需求；旧副本保持原样，已知旧并发/CSS问题未擅自追加修复。侧栏仍待用户正常添加，不能绕过先前 UI 拒绝。
 
 ## 讨论与执行入口
 

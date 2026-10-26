@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "checks": [
+    "default, exact fill, landscape and portrait sources have no warning (DPR 2)",
+    "real pointer drag exposes each of four edges; reset immediately clears warning",
+    "enlarged image can move while covered; moving back immediately clears warning",
+    "wide/tall output and responsive preview resizing preserve exact output boundary",
+    "single export lists affected edges; return and Escape cancel without any download",
+    "repeated confirmation downloads once; PNG has transparent gaps, teal pixels, and no warning overlay",
+    "mixed ZIP warns only affected image; cancel downloads nothing; continue once preserves all clean image bytes",
+    "format changes invalidate stale results; JPEG contains only source/background, no overlay",
+    "corrected image exports singly and in ZIP without a confirmation",
+    "crop toggle/reset/replacement clear appropriate state; transparent and white source pixels never trigger geometric warnings"
+  ],
+  "downloads": 5,
+  "pageErrors": [],
+  "viewport": "1500x1000 and 1280x900",
+  "deviceScaleFactor": 2,
+  "site_id": "2f09f9aa-d230-4ee3-b7bc-3aa1689350f7",
+  "name": "pihou-pictag",
+  "url": "https://pihou-pictag.netlify.app",
+  "published_deploy": {
+    "id": "6adf28f54668e79652ae7e4c",
+    "state": "ready",
+    "commit_ref": "19df7420b9f5799bcab8e5de0ca90dd448f81e64",
+    "published_at": "2026-10-26T10:18:49.637Z"
+  },
+  "rollback_deploy": "6ad98564ac3b74535fd9623c",
+  "rollback_commit": "4d8b29189e9f2e8131f82d97c87c5820ead32ee7"
+}
