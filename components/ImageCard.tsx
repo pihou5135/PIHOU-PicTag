@@ -3,6 +3,7 @@ import { ImageFile, TagSettings } from '../types';
 import { X, CheckCircle, Clock, AlertCircle, Download, Move, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { getByteSizeOfDataUrl } from '../services/canvasUtils';
 import { getImageGeometry, EDGE_LABELS } from '../services/coverage';
+import LivePreview from './LivePreview';
 
 interface ImageCardProps {
   image: ImageFile;
@@ -12,9 +13,10 @@ interface ImageCardProps {
   onUpdateScale: (id: string, scale: number) => void;
   onDownload: (id: string) => void;
   disabled?: boolean;
+  downloadDisabled?: boolean;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpdateOffset, onUpdateScale, onDownload, disabled = false }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpdateOffset, onUpdateScale, onDownload, disabled = false, downloadDisabled = false }) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const previewScaleRef = useRef(1);
   const dragRef = useRef<{ pointerId: number; x: number; y: number; offsetX: number; offsetY: number } | null>(null);
@@ -164,22 +166,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
           onPointerCancel={endDrag}
           onLostPointerCapture={endDrag}
         >
-          {image.processedUrl ? (
-            <img src={image.processedUrl} alt="处理结果" draggable={false} className="absolute inset-0 w-full h-full pointer-events-none select-none" />
-          ) : (
-            <img
-              src={image.previewUrl}
-              alt="原图预览"
-              draggable={false}
-              className={`absolute max-w-none pointer-events-none select-none ${settings.enableCrop ? '' : 'opacity-50 grayscale'}`}
-              style={{
-                left: `${geometry.drawX / canvasWidth * 100}%`,
-                top: `${geometry.drawY / canvasHeight * 100}%`,
-                width: `${geometry.drawWidth / canvasWidth * 100}%`,
-                height: `${geometry.drawHeight / canvasHeight * 100}%`,
-              }}
-            />
-          )}
+          <LivePreview image={image} settings={settings} />
           {/* UI only: neither these stripes nor the warning text enter Canvas. */}
           {uncoveredEdges.map(edge => (
             <div
@@ -249,7 +236,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, settings, onRemove, onUpda
           {image.processedUrl && (
             <button
               type="button"
-              disabled={disabled}
+              disabled={disabled || downloadDisabled}
               onClick={() => onDownload(image.id)}
               className="text-blue-500 hover:text-blue-700 p-1 disabled:opacity-40"
               title="单独下载"

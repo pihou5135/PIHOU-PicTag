@@ -19,6 +19,12 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<TagSettings>(DEFAULT_SETTINGS);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isReadingWatermark, setIsReadingWatermark] = useState(false);
+  const readingWatermarkRef = useRef(false);
+  const handleWatermarkReadState = useCallback((reading: boolean) => {
+    readingWatermarkRef.current = reading;
+    setIsReadingWatermark(reading);
+  }, []);
   const [pendingExport, setPendingExport] = useState<ExportRequest | null>(null);
   const pendingExportRef = useRef<ExportRequest | null>(null);
   const busyRef = useRef(false);
@@ -62,7 +68,7 @@ const App: React.FC = () => {
   }, []);
 
   const processAll = async () => {
-    if (images.length === 0 || busyRef.current) return;
+    if (images.length === 0 || busyRef.current || readingWatermarkRef.current) return;
     busyRef.current = true;
     setIsProcessing(true);
 
@@ -108,7 +114,7 @@ const App: React.FC = () => {
   };
 
   const executeExport = async (request: ExportRequest) => {
-    if (busyRef.current) return;
+    if (busyRef.current || readingWatermarkRef.current) return;
     busyRef.current = true;
     setIsExporting(true);
     try {
@@ -136,7 +142,7 @@ const App: React.FC = () => {
   };
 
   const requestExport = (kind: ExportRequest['kind'], id?: string) => {
-    if (busyRef.current || pendingExportRef.current) return;
+    if (busyRef.current || readingWatermarkRef.current || pendingExportRef.current) return;
     const ready = images.filter(img => img.status === 'done' && img.processedUrl && (!id || img.id === id));
     if (!ready.length) {
       alert("没有已处理完成的图片可下载，请先点击'应用到所有图片'");
@@ -204,6 +210,7 @@ const App: React.FC = () => {
             setSettings={updateSettings}
             onApplyAll={processAll}
             isProcessing={isProcessing}
+            onWatermarkReadStateChange={handleWatermarkReadState}
           />
         </fieldset>
       </aside>
@@ -253,7 +260,7 @@ const App: React.FC = () => {
             {images.some(img => img.status === 'done') && (
               <button
                 onClick={() => requestExport('zip')}
-                disabled={isBusy}
+                disabled={isBusy || isReadingWatermark}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg shadow-md transition-all animate-in fade-in zoom-in"
               >
                 <Download className="w-4 h-4" /> 
@@ -288,6 +295,7 @@ const App: React.FC = () => {
                   onUpdateScale={updateImageScale}
                   onDownload={id => requestExport('single', id)}
                   disabled={isBusy}
+                  downloadDisabled={isReadingWatermark}
                 />
               ))}
             </div>

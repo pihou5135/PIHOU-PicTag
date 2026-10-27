@@ -74,7 +74,7 @@ const testUrl = process.env.PICTAG_TEST_URL || 'http://127.0.0.1:4173';
     await page.locator('input[type=file][multiple]').setInputFiles([square,wide,tall]);
     await card('tall.png').waitFor();
     for(const name of ['square.png','wide.png','tall.png']) await expectEdges(name,[]);
-    await page.getByRole('button',{name:'文字',exact:true}).click();
+    await page.getByRole('button',{name:'文字水印',exact:true}).click();
     const crop=page.getByText('统一裁切尺寸',{exact:true}).locator('..').locator('input[type=checkbox]');
     await crop.check();
     for(const name of ['square.png','wide.png','tall.png']) await expectEdges(name,[]);

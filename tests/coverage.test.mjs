@@ -96,7 +96,7 @@ test('PNG and JPEG Canvas drawing uses the same rectangle, without drawing warni
   try {
     for (const format of ['image/png', 'image/jpeg']) {
       const calls = [];
-      const context = { drawImage: (...args) => calls.push(args) };
+      const context = { setTransform() {}, drawImage: (...args) => calls.push(args) };
       const canvas = { width: 0, height: 0, getContext: () => context, toDataURL: mime => `data:${mime};base64,AA==` };
       globalThis.document = {
         fonts: { load: async () => {} },

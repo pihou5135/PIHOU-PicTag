@@ -10,17 +10,85 @@ interface SettingsPanelProps {
   setSettings: React.Dispatch<React.SetStateAction<TagSettings>>;
   onApplyAll: () => void;
   isProcessing: boolean;
+  onWatermarkReadStateChange?: (isReading: boolean) => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
   settings, 
   setSettings, 
   onApplyAll,
-  isProcessing 
+  isProcessing,
+  onWatermarkReadStateChange
 }) => {
   const [presets, setPresets] = React.useState<Preset[]>([]);
   const [newPresetName, setNewPresetName] = React.useState('');
   const [showPresetInput, setShowPresetInput] = React.useState(false);
+  const [isReadingWatermark, setIsReadingWatermark] = React.useState(false);
+  const [watermarkReadError, setWatermarkReadError] = React.useState('');
+  const readStateCallbackRef = React.useRef(onWatermarkReadStateChange);
+  readStateCallbackRef.current = onWatermarkReadStateChange;
+  const watermarkReadingRef = React.useRef(false);
+  const setWatermarkReading = (reading: boolean) => {
+    watermarkReadingRef.current = reading;
+    setIsReadingWatermark(reading);
+    readStateCallbackRef.current?.(reading);
+  };
+  const watermarkInputRef = React.useRef<HTMLInputElement>(null);
+  const watermarkReaderRef = React.useRef<FileReader | null>(null);
+  const watermarkDecoderRef = React.useRef<HTMLImageElement | null>(null);
+  const watermarkRequestRef = React.useRef(0);
+  const isMountedRef = React.useRef(true);
+  const imageWatermarkEnabledRef = React.useRef(settings.enableImageWatermark);
+  imageWatermarkEnabledRef.current = settings.enableImageWatermark;
+  const controlId = React.useId();
+
+  const cancelWatermarkRead = React.useCallback(() => {
+    // Abort work and invalidate callbacks already queued by the browser.
+    watermarkRequestRef.current += 1;
+    const reader = watermarkReaderRef.current;
+    watermarkReaderRef.current = null;
+    if (reader) {
+      reader.onload = null;
+      reader.onerror = null;
+      reader.onabort = null;
+      if (reader.readyState === FileReader.LOADING) reader.abort();
+    }
+    const decoder = watermarkDecoderRef.current;
+    watermarkDecoderRef.current = null;
+    if (decoder) {
+      decoder.onload = null;
+      decoder.onerror = null;
+      decoder.src = '';
+    }
+  }, []);
+
+  const resetWatermarkRead = () => {
+    cancelWatermarkRead();
+    setWatermarkReading(false);
+    setWatermarkReadError('');
+    if (watermarkInputRef.current) watermarkInputRef.current.value = '';
+  };
+
+  React.useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      cancelWatermarkRead();
+      if (watermarkReadingRef.current) {
+        watermarkReadingRef.current = false;
+        readStateCallbackRef.current?.(false);
+      }
+    };
+  }, [cancelWatermarkRead]);
+
+  React.useEffect(() => {
+    if (!settings.enableImageWatermark) {
+      cancelWatermarkRead();
+      setWatermarkReading(false);
+      setWatermarkReadError('');
+    }
+  }, [settings.enableImageWatermark, cancelWatermarkRead]);
+
 
   React.useEffect(() => {
     const saved = localStorage.getItem('pictag_presets');
@@ -39,6 +107,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleChange = (key: keyof TagSettings, value: any) => {
+    if (key === 'enableImageWatermark' && !value) resetWatermarkRead();
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -66,6 +135,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleLoadPreset = (preset: Preset) => {
+    resetWatermarkRead();
     setSettings({ ...settings, ...preset.settings });
   };
 
@@ -75,17 +145,62 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        handleChange('watermarkImage', event.target?.result as string);
+    const file = e.currentTarget.files?.[0];
+    // Keep one input mounted and allow selecting the same file again.
+    e.currentTarget.value = '';
+    if (!file || !settings.enableImageWatermark || isProcessing) return;
+    resetWatermarkRead();
+    if (!file.type.startsWith('image/')) {
+      setWatermarkReadError('请选择图片文件，当前水印未更改。');
+      return;
+    }
+
+    const request = watermarkRequestRef.current;
+    const isCurrent = () => isMountedRef.current && imageWatermarkEnabledRef.current && request === watermarkRequestRef.current;
+    const fail = () => {
+      if (!isCurrent()) return;
+      cancelWatermarkRead();
+      setWatermarkReading(false);
+      setWatermarkReadError('无法读取这张图片，请重新选择。当前水印未更改。');
+    };
+    const reader = new FileReader();
+    watermarkReaderRef.current = reader;
+    setWatermarkReading(true);
+    reader.onerror = fail;
+    reader.onabort = fail;
+    reader.onload = () => {
+      if (!isCurrent()) return;
+      const result = reader.result;
+      if (typeof result !== 'string' || !result.startsWith('data:image/')) {
+        fail();
+        return;
+      }
+      // A successful FileReader read alone does not mean the image can decode.
+      // Keep the previous watermark until the replacement is usable.
+      const decoder = new Image();
+      watermarkDecoderRef.current = decoder;
+      decoder.onerror = fail;
+      decoder.onload = () => {
+        if (!isCurrent()) return;
+        if (!decoder.naturalWidth || !decoder.naturalHeight) {
+          fail();
+          return;
+        }
+        cancelWatermarkRead();
+        setWatermarkReading(false);
+        setSettings(prev => prev.enableImageWatermark ? { ...prev, watermarkImage: result } : prev);
       };
+      decoder.src = result;
+    };
+    try {
       reader.readAsDataURL(file);
+    } catch {
+      fail();
     }
   };
 
   const removeWatermarkImage = () => {
+    resetWatermarkRead();
     handleChange('watermarkImage', null);
   };
 
@@ -101,6 +216,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
           <button
             onClick={() => handleChange('enableTextWatermark', !settings.enableTextWatermark)}
+            aria-label="文字水印"
+            aria-pressed={settings.enableTextWatermark}
             className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-md transition-all ${
               settings.enableTextWatermark ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -109,6 +226,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </button>
           <button
             onClick={() => handleChange('enableImageWatermark', !settings.enableImageWatermark)}
+            aria-label="图片水印"
+            aria-pressed={settings.enableImageWatermark}
             className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium rounded-md transition-all ${
               settings.enableImageWatermark ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -119,8 +238,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* Text Content */}
         <div className={settings.enableTextWatermark ? 'block' : 'opacity-40 pointer-events-none'}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">标签文本</label>
+          <label htmlFor={`${controlId}-text`} className="block text-sm font-medium text-gray-700 mb-1">标签文本</label>
           <textarea
+            id={`${controlId}-text`}
+            disabled={!settings.enableTextWatermark}
             value={settings.text}
             onChange={(e) => handleChange('text', e.target.value)}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
@@ -132,31 +253,35 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         {/* Font Style */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={`${controlId}-font-size`} className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
               <Type className="w-4 h-4" /> 字号 (px)
             </label>
             <input
               type="number"
               min="1"
               max="1000"
+              id={`${controlId}-font-size`}
               value={settings.fontSize || ''}
               onChange={(e) => handleNumberChange('fontSize', e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={`${controlId}-color`} className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
               <Palette className="w-4 h-4" /> 颜色
             </label>
             <div className="flex gap-2">
               <input
                 type="color"
+                id={`${controlId}-color`}
+                aria-label="文字颜色"
                 value={settings.color}
                 onChange={(e) => handleChange('color', e.target.value)}
                 className="w-10 h-10 p-0 border rounded overflow-hidden cursor-pointer"
               />
               <input
                 type="text"
+                aria-label="文字颜色值"
                 value={settings.color.toUpperCase()}
                 onChange={(e) => handleChange('color', e.target.value)}
                 className="flex-1 w-full px-2 py-2 border rounded-lg text-xs uppercase"
@@ -167,8 +292,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* Font Weight */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">字体粗细</label>
+          <label htmlFor={`${controlId}-font-weight`} className="block text-sm font-medium text-gray-700 mb-1">字体粗细</label>
           <select
+            id={`${controlId}-font-weight`}
             value={settings.fontWeight}
             onChange={(e) => handleChange('fontWeight', e.target.value)}
             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -182,79 +308,102 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
 
         {/* Image Watermark */}
-        <div className={`pt-4 border-t border-gray-100 ${settings.enableImageWatermark ? 'block' : 'opacity-40 pointer-events-none'}`}>
-          <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-3">
+        <fieldset disabled={!settings.enableImageWatermark || isProcessing} className={`pt-4 border-t border-gray-100 min-w-0 ${settings.enableImageWatermark ? '' : 'opacity-40'}`}>
+          <legend className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-3">
             <ImageIcon className="w-4 h-4" /> 图片水印
-          </label>
-          
-          {!settings.watermarkImage ? (
-            <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
-              <input
-                type="file"
-                accept="image/png, image/jpeg, image/webp"
-                onChange={handleImageUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-              <span className="text-sm text-gray-500">点击上传水印图片</span>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="relative border rounded-lg p-2 bg-gray-50 flex items-center justify-between">
-                <img src={settings.watermarkImage} alt="Watermark" className="h-10 object-contain max-w-[150px]" />
+          </legend>
+          <input
+            ref={watermarkInputRef}
+            type="file"
+            accept="image/png, image/jpeg, image/webp"
+            aria-label="选择或替换水印图片"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <div className="space-y-3">
+            {settings.watermarkImage && (
+              <div className="border rounded-lg p-2 bg-gray-50">
+                <img src={settings.watermarkImage} alt="当前水印图片" className="h-10 object-contain max-w-full mx-auto" />
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => watermarkInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                {settings.watermarkImage ? '替换水印图片' : '选择水印图片'}
+              </button>
+              {(settings.watermarkImage || isReadingWatermark) && (
                 <button
+                  type="button"
                   onClick={removeWatermarkImage}
-                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                  title="移除水印图片"
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                  title={settings.watermarkImage ? '移除水印图片' : '取消读取'}
+                  aria-label={settings.watermarkImage ? '移除水印图片' : '取消读取水印图片'}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">缩放比例 ({settings.watermarkScale}x)</label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="3"
-                    step="0.1"
-                    value={settings.watermarkScale}
-                    onChange={(e) => handleChange('watermarkScale', parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">不透明度 ({settings.watermarkOpacity})</label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1"
-                    step="0.1"
-                    value={settings.watermarkOpacity}
-                    onChange={(e) => handleChange('watermarkOpacity', parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">水印位置</label>
-                <select
-                  value={settings.watermarkPosition}
-                  onChange={(e) => handleChange('watermarkPosition', e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-                >
-                  <option value="center">居中</option>
-                  <option value="bottom-right">右下角</option>
-                  <option value="bottom-left">左下角</option>
-                  <option value="top-right">右上角</option>
-                  <option value="top-left">左上角</option>
-                </select>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+            <div role="status" aria-live="polite" aria-atomic="true" className="text-xs text-gray-500">
+              {isReadingWatermark && (settings.watermarkImage ? '正在读取水印图片…预览暂时保留当前水印。' : '正在读取水印图片…')}
+            </div>
+            {watermarkReadError && <p role="alert" className="text-xs text-red-600">{watermarkReadError}</p>}
+
+            {settings.watermarkImage && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor={`${controlId}-watermark-scale`} className="block text-xs text-gray-500 mb-1">缩放比例 ({settings.watermarkScale}x)</label>
+                    <input
+                      id={`${controlId}-watermark-scale`}
+                      aria-label="图片水印缩放比例"
+                      type="range"
+                      min="0.1"
+                      max="3"
+                      step="0.1"
+                      value={settings.watermarkScale}
+                      onChange={(e) => handleChange('watermarkScale', parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`${controlId}-watermark-opacity`} className="block text-xs text-gray-500 mb-1">不透明度 ({settings.watermarkOpacity})</label>
+                    <input
+                      id={`${controlId}-watermark-opacity`}
+                      aria-label="图片水印不透明度"
+                      type="range"
+                      min="0.1"
+                      max="1"
+                      step="0.1"
+                      value={settings.watermarkOpacity}
+                      onChange={(e) => handleChange('watermarkOpacity', parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor={`${controlId}-watermark-position`} className="block text-xs text-gray-500 mb-1">水印位置</label>
+                  <select
+                    id={`${controlId}-watermark-position`}
+                    aria-label="图片水印位置"
+                    value={settings.watermarkPosition}
+                    onChange={(e) => handleChange('watermarkPosition', e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="center">居中</option>
+                    <option value="bottom-right">右下角</option>
+                    <option value="bottom-left">左下角</option>
+                    <option value="top-right">右上角</option>
+                    <option value="top-left">左上角</option>
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+        </fieldset>
 
         {/* Margins */}
         <div className="space-y-3">
@@ -263,18 +412,20 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </label>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-xs text-gray-500 block mb-1">左边距 (X)</span>
+              <label htmlFor={`${controlId}-margin-x`} className="text-xs text-gray-500 block mb-1">左边距 (X)</label>
               <input
                 type="number"
+                id={`${controlId}-margin-x`}
                 value={settings.marginX || ''}
                 onChange={(e) => handleNumberChange('marginX', e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <span className="text-xs text-gray-500 block mb-1">底边距 (Y)</span>
+              <label htmlFor={`${controlId}-margin-y`} className="text-xs text-gray-500 block mb-1">底边距 (Y)</label>
               <input
                 type="number"
+                id={`${controlId}-margin-y`}
                 value={settings.marginY || ''}
                 onChange={(e) => handleNumberChange('marginY', e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -535,11 +686,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </button>
         )}
         
+        <p className="text-xs leading-relaxed text-gray-500">水印实时预览；应用到所有图片生成下载结果。</p>
         <button
           onClick={onApplyAll}
-          disabled={isProcessing}
+          disabled={isProcessing || isReadingWatermark}
           className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 ${
-            isProcessing 
+            isProcessing || isReadingWatermark
             ? 'bg-blue-300 cursor-not-allowed' 
             : 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-200'
           }`}
