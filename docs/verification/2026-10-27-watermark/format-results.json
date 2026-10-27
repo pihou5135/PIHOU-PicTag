@@ -1,0 +1,133 @@
+{
+  "status": "passed",
+  "checks": [
+    "crop gap JPEG uses computed black preview background and opaque black export; PNG restores transparent background/alpha with identical watermark layout"
+  ],
+  "measurements": {
+    "jpegGap": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.31565806419029824,
+      "maxDifference": 100,
+      "channelsOver40Fraction": 0.0019475518294992551,
+      "corner": [
+        0,
+        0,
+        0,
+        255
+      ]
+    },
+    "beforeFormat": {
+      "width": 398,
+      "height": 398,
+      "revision": 13,
+      "hash": -29736491,
+      "red": {
+        "count": 2640,
+        "x": 166,
+        "y": 179,
+        "right": 231,
+        "bottom": 218
+      },
+      "green": {
+        "count": 2472,
+        "x": 42,
+        "y": 329,
+        "right": 242,
+        "bottom": 353
+      }
+    },
+    "afterPNGSwitch": {
+      "width": 398,
+      "height": 398,
+      "revision": 15,
+      "hash": -477731254,
+      "red": {
+        "count": 2640,
+        "x": 166,
+        "y": 179,
+        "right": 231,
+        "bottom": 218
+      },
+      "green": {
+        "count": 2472,
+        "x": 42,
+        "y": 329,
+        "right": 242,
+        "bottom": 353
+      }
+    },
+    "formatSwitchPixelDifference": {
+      "meanAbsoluteDifference": 0.08999930557309159,
+      "changedChannelFraction": 0.0029986616499583342,
+      "maxDifference": 128,
+      "changedPixelBounds": [
+        42,
+        100,
+        298,
+        358
+      ],
+      "changedChannelsAtSourceEdges": 417,
+      "changedChannels": 1900
+    },
+    "pngGap": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.4606102118633368,
+      "maxDifference": 195,
+      "channelsOver40Fraction": 0.003882477715209212,
+      "corner": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "identicalInputControl": {
+      "description": "Same renderer, canvas, image and settings on every draw; no format or UI changes. Readback after each draw.",
+      "draws": [
+        {
+          "draw": 1,
+          "hash": -29736491,
+          "differenceFromPrevious": 0,
+          "changedChannelFraction": 0
+        },
+        {
+          "draw": 2,
+          "hash": -29736491,
+          "differenceFromPrevious": 0,
+          "changedChannelFraction": 0
+        },
+        {
+          "draw": 3,
+          "hash": -477731254,
+          "differenceFromPrevious": 0.08999930557309159,
+          "changedChannelFraction": 0.0029986616499583342
+        },
+        {
+          "draw": 4,
+          "hash": -477731254,
+          "differenceFromPrevious": 0,
+          "changedChannelFraction": 0
+        },
+        {
+          "draw": 5,
+          "hash": -477731254,
+          "differenceFromPrevious": 0,
+          "changedChannelFraction": 0
+        },
+        {
+          "draw": 6,
+          "hash": -477731254,
+          "differenceFromPrevious": 0,
+          "changedChannelFraction": 0
+        }
+      ]
+    }
+  },
+  "downloads": 2,
+  "pageErrors": [],
+  "url": "http://127.0.0.1:4173",
+  "viewport": "1500x1000",
+  "deviceScaleFactor": 2
+}
