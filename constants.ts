@@ -22,6 +22,8 @@ export const DEFAULT_SETTINGS: TagSettings = {
   watermarkOpacity: 1,
   watermarkScale: 1,
   watermarkPosition: 'bottom-right',
+  watermarkOffsetX: 0,
+  watermarkOffsetY: 0,
   // Toggles
   enableTextWatermark: true,
   enableImageWatermark: true,

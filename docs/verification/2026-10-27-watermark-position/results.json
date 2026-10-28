@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "checks": [
+    "all five anchors apply independent signed fractional offsets in output coordinates",
+    "positive/negative moves leave text unchanged; real typing including -0.5, clearing/blur, fractions and keyboard stepping work",
+    "moving only the image watermark resolves actual text overlap; reset preserves shared margins and text",
+    "legacy presets reset missing offsets to zero; new and newly saved presets restore offsets",
+    "rapid edits, image replacement/removal/reselection and mixed image sizes preserve latest offsets without encoding",
+    "resized and cropped outputs use final pixel offsets; source coverage warnings do not change with watermark moves",
+    "actual PNG, JPEG and ZIP align with preview; crop warnings stay out of exports and offset edits invalidate old downloads"
+  ],
+  "measurements": {
+    "overlap": {
+      "beforeTextPixels": 254,
+      "afterTextPixels": 645,
+      "referenceTextPixels": 645
+    },
+    "png": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.4074912880987854,
+      "channelsOver40Fraction": 0.003170690134087523,
+      "corner": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "jpeg": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.34964710487108913,
+      "channelsOver40Fraction": 0.0012483901921668645,
+      "corner": [
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  },
+  "downloads": 3,
+  "pageErrors": [],
+  "url": "http://127.0.0.1:4173",
+  "viewport": "1500x1000",
+  "deviceScaleFactor": 2
+}

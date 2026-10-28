@@ -1,0 +1,45 @@
+{
+  "checked_at": "2026-10-28T14:16:24.662896+08:00",
+  "authorization": "2026-10-28 用户明确批准将本轮最新水印功能同步 GitHub 并正式部署。",
+  "starting_branch": "codex/live-watermark-preview",
+  "starting_head": "4f507166c812cf58f318a677ff2512daa2684e07",
+  "remote_main_before": "cdba1d1fbb584e20ba8a3e426820cd585a9f0878",
+  "site": {
+    "id": "2f09f9aa-d230-4ee3-b7bc-3aa1689350f7",
+    "url": "https://pihou-pictag.netlify.app/",
+    "repository": "https://github.com/pihou5135/PIHOU-PicTag",
+    "production_branch": "main",
+    "command": "npm run build",
+    "publish": "dist",
+    "stop_builds": false
+  },
+  "rollback": {
+    "deploy_id": "6adf28f54668e79652ae7e4c",
+    "commit": "19df7420b9f5799bcab8e5de0ca90dd448f81e64"
+  },
+  "checks": {
+    "unit_tests": "82/82 passed",
+    "typescript": "npm run lint exit 0",
+    "build": "npm run build exit 0",
+    "direction_browser": "8 groups, 3 PNG/JPEG/ZIP downloads, no page errors",
+    "boundary_browser": "10 groups, 5 downloads, no page errors",
+    "doc_links": "52 valid before release record append",
+    "launcher_syntax": "zsh -n passed",
+    "diff_check": "passed",
+    "old_copy": "HEAD, status and configuration hashes unchanged"
+  },
+  "limitations": [
+    "Desktop Chrome only; Safari/Firefox/touch not rerun.",
+    "Existing /index.css build warning retained.",
+    "Native select keyboard option selection not validated; step change and isolation covered."
+  ],
+  "source_sha256": {
+    "App.tsx": "8a487c631b244b127a2f90001d3ea5431f48514ae714037c1813146540aae180",
+    "components/LivePreview.tsx": "98acd92d4df928652fcdf6f260ddf16751cb505deb22484250bb4fb285291b35",
+    "components/SettingsPanel.tsx": "7f56b308953774fbd8d7464217db788fffce0890f8c63357fb784f8562dac6a8",
+    "components/ImageCard.tsx": "5fcf8f7be40a94210ac9ff69da4ce51a3a253a7389e39ce8ee963ca53d2a8e81",
+    "services/canvasUtils.ts": "98aca5c84a3573debb594b40bdad9a4f6041d3e5c66e2c3f2a993e1fa9700d04",
+    "constants.ts": "295d504ffbf4cfe11be6d08a5ff023010bf80d1cea4349fd3f9cf46545d10c3f",
+    "types.ts": "dcf7c18f17551ccb91c0dbafd76b38bd4febbaa0149e0fb9d98549f015e33a39"
+  }
+}

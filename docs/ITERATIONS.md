@@ -105,3 +105,63 @@
 **决定：** 共用Canvas而非重新猜CSS水印坐标；预览不编码原图、正式结果仍由明确“应用”生成；只绘制可见/附近卡片，资源缓存有界；水印文件留在浏览器本地。选择新水印期间仅阻止生成/下载，不锁死正常编辑。保留现有功能边界，不修其他旧问题。
 
 **同步核查与未完成项：** 已只读确认Netlify仅允许main、无build hooks，仓库无workflow/runs、目标分支无开放PR，唯一仓库hook匹配既有Netlify站点；其他App/组织级集成未全面核实。因此保留本地，不push/PR、不改站点设置绕过。等待用户本轮验收及后续明确发布授权。Safari/Firefox/触屏与更多字体硬件未测；旧并发问题和CSS缺失警告保留。服务 [127.0.0.1:4173](http://127.0.0.1:4173/) 按授权暂时运行，只监听loopback；停止/重启方式见STATUS。
+
+
+## 2026-10-27 · 恢复第二轮本地验收入口
+
+**目标与基线：** 用户报告本机地址无法连接。核实 `codex/live-watermark-preview` / `4f507166c812cf58f318a677ff2512daa2684e07`，开工工作区干净、origin 正确。4173 无监听，curl 连接失败，旧 Vite 进程不在；确切退出原因未确认，执行器重连不等于服务恢复。
+
+**实际操作与文件：** 新增根目录 `启动本地预览.command`，在独立 Terminal 窗口前台运行已有 Vite，明确绑定 `127.0.0.1:4173` / strictPort。脚本定位自身目录并使用现有 Node/npm，端口占用只提示退出，不杀进程、不自动安装依赖；没有后台登录启动项或系统网络设置变更。更新 README、STATUS、本记录及恢复截图/结果。没有修改应用功能代码、旧副本或远端；这些恢复文件暂未提交。
+
+**实际验证：** `/bin/zsh -n` 语法通过；监听进程确认来自本项目 Vite，HTTP 200。2026-10-27 03:53 UTC 真实 Chrome 隔离会话使用合成图完成文字编辑、选择图片水印，均在“应用”前改变预览 Canvas，无页面脚本异常；截图与 JSON 保存于 `docs/verification/2026-10-27-watermark/recovery*`。本次没有重跑57项功能单测/全量构建或导出回归，应用源码未变；上一轮验证记录保留。
+
+**交付与下一步：** [本机验收地址](http://127.0.0.1:4173/) 已恢复；保持终端窗口运行，Ctrl+C 停止，之后可双击启动器恢复。Mac休眠/重启或关闭终端可能影响可用性，接手先查实际监听和HTTP。继续等待用户第二轮验收；没有GitHub推送、PR、合并main或Netlify部署，本轮无发布授权。
+
+
+## 2026-10-27 · 本地服务再次排障，暂停 GitHub 同步
+
+**用户目标及授权：** 本地无法访问后询问GitHub预览。用户选择“仅同步GitHub，暂不部署预览”，核查过程中又明确“先保留本地，暂不继续同步”。最终按后者暂停远端写入，没有push、PR、合并main、在线预览或生产部署。
+
+**本地排障与操作：** 用户确认使用同一Mac的Safari/Chrome。实际4173无监听、curl连接失败；上次独立Terminal服务已退出，确切原因未确认。用已有Node/Vite启动独立会话进程，标准输入关闭、输出重定向到 `/tmp/pictag-preview-4173.log`，PID记录 `/tmp/pictag-preview-4173.pid`，没有登录启动项或系统网络设置修改。应用源码未变；分支仍 `codex/live-watermark-preview` / `4f50716`。改动仅为前次启动器/文档/证据和本次状态、迭代、运行检查记录，暂未提交。
+
+**验证与限制：** 2026-10-27T12:04:30+08:00（北京时间）核实进程来自本项目、HTTP 200，内置浏览器可加载并刷新且显示实时水印控件。没有重跑已有57项功能测试或构建；本次仅恢复运行。未控制用户Safari/Chrome，未确认用户本次验收成功，跨重启/执行器断连的持久性未验证。读取Terminal界面被计算机使用工具安全限制拒绝，未重试/绕过；CLI进程与HTTP检查仍正常。
+
+**远端只读结果：** GitHub main `cdba1d1`，目标功能分支尚不存在；Actions workflows/runs为0、目标PR为0，唯一活跃repo webhook主机为api.netlify.com。Netlify绑定不变、allowed_branches仅main，线上部署仍 `6adf28f54668e79652ae7e4c` / `19df742`。GitHub App完整清单的两个API受现有权限限制，网页未登录；未扩大权限，未把skip标记当作完整核查。用户已暂停同步，后续须按新指令继续。
+
+
+## 2026-10-27 · 第三轮：图片水印位置微调（本地完成，待用户验收）
+
+**目标和授权：** 用户确认实时预览正常，要求图片水印能进一步调整位置，解决与文字水印同时使用时的遮挡。沿用最新“先保留本地，暂不继续同步”，没有GitHub写入、PR或Netlify部署；第二轮验收不构成本轮发布授权。
+
+**基线与范围：** 分支 `codex/live-watermark-preview`，起始/当前已提交HEAD `4f507166c812cf58f318a677ff2512daa2684e07`。已有未提交服务恢复说明、启动器和证据全部保留。本轮功能、测试与文档仍为未提交本地改动；旧副本HEAD/状态/`.gitignore`及`netlify.toml`哈希复核未变。
+
+**实际文件和决定：** geometry agent在 `types.ts`、`constants.ts` 新增 watermarkOffsetX/Y，默认0；`services/canvasUtils.ts`在五个既有定位计算之后追加最终输出像素偏移，缺省/非有限值归0，预览导出共用。settings agent在 `components/SettingsPanel.tsx`添加两轴输入及复位，支持负数、小数、键盘调整；保留输入草稿避免`-0.5`中负号被自身更新清除，空值失焦归0。旧预设不继承上次偏移，新预设保存/还原，替换/移除/切定位保留偏移。保持文字、原共享边距、源图拖动与裁切，不引入第二种拖拽模式或自动避让，不修其他旧问题。
+
+测试新增在 `tests/rendering.test.mjs`（10项）、`tests/settingsUpload.test.mjs`（8项），QA新增 `tests/browser-watermark-position.cjs`。协调agent集成、审阅并更新README/STATUS/本记录及 `docs/verification/2026-10-27-watermark-position/`。原App的设置更新路径已使旧结果失效，无需改App/LivePreview。
+
+**验证实际结果：** `node --test tests/*.test.mjs`75/75；`npm run lint`与`npm run build`均退出码0，原`/index.css`警告保留。已有Playwright/Chrome运行位置脚本7组、3次PNG/JPEG/ZIP下载通过，源图边界脚本10组、5次下载通过；页面无脚本异常，合成素材未上传外部服务。覆盖五anchor、正负小数、逐键`-80.5`/`-40.25`/`-0.5`、清空失焦、文字不动/重叠移开、复位、旧新及新保存预设、快速输入、替换删除重选、宽竖/resize/crop、旧下载失效和告警不导出。PNG/JPEG预览对导出均值通道差0.4075/0.3496；ZIP内PNG与单张字节一致，编辑编码0次。截图已目视复核；详细命令/代码哈希/证据见STATUS。
+
+**交付与未完成：** 本地原4173独立服务保持运行，没有重启用户正在用的服务，热更新加载修改；当前入口 `http://127.0.0.1:4173/`。用户可在图片水印区使用水平/垂直偏移，负垂直值将水印上移，与文字错开。第三轮尚待用户验收；Safari/Firefox/触屏未测，后台服务跨重启/断连持久性未保证。无需继续远端核查，恢复同步/发布须按未来新授权。
+
+
+## 2026-10-27 · 第三轮反馈：上下左右按方向操作
+
+**目标：** 用户要求“上下移动就上下，左右就左右”，把图片水印正负偏移输入改为直观方向操作。沿用仅本地授权，分支/HEAD仍为 `codex/live-watermark-preview` / `4f50716`，未提交的前轮功能和维护文件全部保留。
+
+**变更：** `components/SettingsPanel.tsx`以三乘三方向盘替换两轴数字输入，上-Y/下+Y/左-X/右+X，中央复位；步长select为1/10/50像素、默认10。删除原数字草稿同步代码，使用函数式更新避免连点丢步。方向盘内四Arrow键与按钮一致，Enter/Space保留原生点击；select位于方向键group外，改变步长不移动图片。忙碌/图片禁用时保持禁用，旧新预设兼容不变，步长不入预设。没有改Canvas、裁切、导出或其他功能。
+
+控件agent适配 `tests/settingsUpload.test.mjs`，QA更新 `tests/browser-watermark-position.cjs`，协调agent更新README/STATUS/本记录并保存 `docs/verification/2026-10-27-watermark-directions/`；只读reviewer核对方向、更新顺序与禁用。所有分工完成。
+
+**验证：** 全量Node单测82/82，类型检查与构建退出码0，原`/index.css`警告保留。方向盘浏览器8组、3次真实PNG/JPEG/ZIP下载通过；四按钮、每轴方向/步长/连点/文字不动、四Arrow键及Enter/Space、复位/预设/换图、宽竖裁切缩放、旧结果失效及告警不导出均覆盖。PNG/JPEG预览对导出平均通道差0.3073/0.3444，ZIP PNG与单张字节一致，编辑编码0次，无页面脚本异常，截图已目视检查。
+
+**限制与交付：** headless Chrome原生select键盘选项不改变的现象独立复现，未宣称原生菜单键盘选值通过；实测其方向键不误移动图片，实际步长change用selectOption验证。未测Safari/Firefox/触屏；未重复跑完整边界浏览器套件，Canvas未改且前版10组回归记录保留。当前功能和记录均未提交；没有GitHub同步/PR/Netlify部署。本地4173服务保持，方向盘版待用户验收。
+
+
+## 2026-10-28 · 最新水印功能正式发布准备
+
+- **目标/授权**：用户明确说“pictag可以更新到最新了，同步github和部署”，解除此前同步暂停，批准现有Netlify正式站发布。本次包含第二轮文字/图片水印实时预览与第三轮图片水印方向移动，不构成以后自动发布授权。
+- **范围**：接手 `codex/live-watermark-preview` / `4f507166c812cf58f318a677ff2512daa2684e07`，保留并提交上一轮方向控件、偏移类型/默认值/共用Canvas、相关单测/浏览器脚本、合成验证证据、启动器及维护说明。本轮未追加功能代码；更新 README、STATUS、ITERATIONS 和本日发布验证记录。
+- **前置核对**：origin为 `pihou5135/PIHOU-PicTag`，fetch后main仍 `cdba1d1fbb584e20ba8a3e426820cd585a9f0878`，无新增远端冲突。Netlify站点 `2f09f9aa-d230-4ee3-b7bc-3aa1689350f7` / `pihou-pictag` 正式绑定该仓库main；构建/输出 `npm run build` / `dist`，自动构建开启。旧副本配置未迁入，HEAD、状态与哈希完全保持。私有 PROJECT.local.md 被忽略，未纳入同步。
+- **实际验证**：`node --test tests/*.test.mjs` 82/82；`npm run lint`、`npm run build`退出0；方向Chrome浏览器8组/3次PNG/JPEG/ZIP下载、边界Chrome浏览器10组/5次下载均通过，无页面异常。方向截图目视通过，启动器 `zsh -n`、`git diff --check`通过。仅原 `/index.css` 构建警告；未重跑Safari/Firefox/触屏和原生select键盘选值。
+- **证据**：[发布前汇总](verification/2026-10-28-watermark-release/preflight.json)、[方向回归](verification/2026-10-28-watermark-release/local-directions-results.json)、[边界回归](verification/2026-10-28-watermark-release/local-boundary-results.json)。release_review只读审查未见阻断问题，release_validation完成检查；所有写操作和发布由协调agent统一负责。
+- **当前阶段/下一步**：本条记录提交时尚未推送或完成本次部署。将快进合入main并一次推送，通过既有Git集成触发部署，不新建站点、不改设置或权限、不手动重复部署。随后核对实际commit、ready/published部署和生产浏览器功能，并补充最终证据。回滚基线为部署 `6adf28f54668e79652ae7e4c` / 功能commit `19df7420b9f5799bcab8e5de0ca90dd448f81e64`。

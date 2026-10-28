@@ -5,6 +5,9 @@ import { FONT_WEIGHTS } from '../constants';
 import { Type, Move, Palette, TextCursorInput, Save, RefreshCw, Info, Image as ImageIcon, Upload, Trash2, Maximize2, Check, X, Scale } from 'lucide-react';
 import { Preset } from '../types';
 
+const finiteWatermarkOffset = (value: number | undefined): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
 interface SettingsPanelProps {
   settings: TagSettings;
   setSettings: React.Dispatch<React.SetStateAction<TagSettings>>;
@@ -41,6 +44,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const imageWatermarkEnabledRef = React.useRef(settings.enableImageWatermark);
   imageWatermarkEnabledRef.current = settings.enableImageWatermark;
   const controlId = React.useId();
+  const [watermarkMoveStep, setWatermarkMoveStep] = React.useState(10);
 
   const cancelWatermarkRead = React.useCallback(() => {
     // Abort work and invalidate callbacks already queued by the browser.
@@ -121,6 +125,31 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     handleChange(key, isNaN(num) ? 0 : num);
   };
 
+  const moveWatermark = (dx: number, dy: number) => {
+    if (!settings.enableImageWatermark || isProcessing) return;
+    setSettings(prev => ({
+      ...prev,
+      watermarkOffsetX: finiteWatermarkOffset(prev.watermarkOffsetX) + dx * watermarkMoveStep,
+      watermarkOffsetY: finiteWatermarkOffset(prev.watermarkOffsetY) + dy * watermarkMoveStep,
+    }));
+  };
+
+  const resetWatermarkOffsets = () => {
+    if (!settings.enableImageWatermark || isProcessing) return;
+    setSettings(prev => ({ ...prev, watermarkOffsetX: 0, watermarkOffsetY: 0 }));
+  };
+
+  const handleWatermarkDirectionKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!settings.enableImageWatermark || isProcessing || event.altKey || event.ctrlKey || event.metaKey) return;
+    const moves: Record<string, [number, number]> = {
+      ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+    };
+    const move = moves[event.key];
+    if (!move) return;
+    event.preventDefault();
+    moveWatermark(...move);
+  };
+
   const handleSavePreset = () => {
     if (!newPresetName.trim()) return;
     const newPreset: Preset = {
@@ -136,7 +165,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const handleLoadPreset = (preset: Preset) => {
     resetWatermarkRead();
-    setSettings({ ...settings, ...preset.settings });
+    // Old saved presets have no offsets: restore their original placement,
+    // rather than carrying over offsets from a different preset.
+    const watermarkOffsetX = finiteWatermarkOffset(preset.settings.watermarkOffsetX);
+    const watermarkOffsetY = finiteWatermarkOffset(preset.settings.watermarkOffsetY);
+    setSettings({ ...settings, ...preset.settings, watermarkOffsetX, watermarkOffsetY });
   };
 
   const deletePreset = (id: string) => {
@@ -400,6 +433,43 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <option value="top-left">左上角</option>
                   </select>
                 </div>
+                <div>
+                  <label htmlFor={`${controlId}-watermark-move-step`} className="block text-xs text-gray-500 mb-1">每次移动距离</label>
+                  <select
+                    id={`${controlId}-watermark-move-step`}
+                    aria-label="每次移动距离"
+                    value={watermarkMoveStep}
+                    onChange={(e) => {
+                      const step = Number(e.target.value);
+                      if ([1, 10, 50].includes(step)) setWatermarkMoveStep(step);
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="1">1 像素</option>
+                    <option value="10">10 像素</option>
+                    <option value="50">50 像素</option>
+                  </select>
+                </div>
+                <div
+                  role="group"
+                  aria-label="移动图片水印"
+                  onKeyDown={handleWatermarkDirectionKey}
+                  className="grid grid-cols-3 gap-2 max-w-[15rem] mx-auto"
+                >
+                  <button type="button" aria-label="图片水印向上移动" onClick={() => moveWatermark(0, -1)}
+                    className="col-start-2 row-start-1 py-2 border rounded-lg text-sm text-gray-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">上</button>
+                  <button type="button" aria-label="图片水印向左移动" onClick={() => moveWatermark(-1, 0)}
+                    className="col-start-1 row-start-2 py-2 border rounded-lg text-sm text-gray-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">左</button>
+                  <button type="button" aria-label="重置图片水印位置" onClick={resetWatermarkOffsets}
+                    className="col-start-2 row-start-2 py-2 border rounded-lg text-xs text-gray-500 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">复位</button>
+                  <button type="button" aria-label="图片水印向右移动" onClick={() => moveWatermark(1, 0)}
+                    className="col-start-3 row-start-2 py-2 border rounded-lg text-sm text-gray-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">右</button>
+                  <button type="button" aria-label="图片水印向下移动" onClick={() => moveWatermark(0, 1)}
+                    className="col-start-2 row-start-3 py-2 border rounded-lg text-sm text-gray-700 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">下</button>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  点击方向按钮移动图片水印，也可在按钮获得焦点后使用方向键。
+                </p>
               </>
             )}
           </div>

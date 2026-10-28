@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-27T12:04:30+08:00",
+  "url": "http://127.0.0.1:4173/",
+  "http_status": 200,
+  "pid_at_check": 63197,
+  "process": "63197     1 02:41 /usr/local/bin/node ~/PIHOU-PicTag/node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173 --strictPort",
+  "browser": "in-app browser page loads and refreshes with current live-watermark controls",
+  "code_head": "4f507166c812cf58f318a677ff2512daa2684e07",
+  "git_sync": "paused by latest user request; no push or PR",
+  "deployment": "no preview or production deployment",
+  "limits": "Exact cause of prior process exits not established; durability across reboot or executor disconnect not verified."
+}

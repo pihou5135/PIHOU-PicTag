@@ -178,6 +178,10 @@ export const renderCompositionToCanvas = async (
         wmY = snapshot.marginY;
         break;
     }
+    // Apply image-only offsets in the same output coordinates as the anchor.
+    // Old presets omit these fields; malformed/non-finite values also mean zero.
+    wmX += Number.isFinite(snapshot.watermarkOffsetX) ? snapshot.watermarkOffsetX : 0;
+    wmY += Number.isFinite(snapshot.watermarkOffsetY) ? snapshot.watermarkOffsetY : 0;
     ctx.drawImage(watermark, wmX, wmY, wmWidth, wmHeight);
   }
   return true;

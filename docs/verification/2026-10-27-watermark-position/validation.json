@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-10-27T12:15:09+08:00",
+  "branch": "codex/live-watermark-preview",
+  "base_head": "4f507166c812cf58f318a677ff2512daa2684e07",
+  "changes": "uncommitted local changes",
+  "checks": {
+    "node --test tests/*.test.mjs": "75/75 passed",
+    "npm run lint": "passed (exit 0)",
+    "npm run build": "passed (exit 0); existing missing /index.css warning",
+    "tests/browser-watermark-position.cjs": "7 scenarios passed, 3 PNG/JPEG/ZIP downloads",
+    "tests/browser-boundary.cjs": "10 scenarios passed, 5 downloads"
+  },
+  "source_sha256": {
+    "types.ts": "dcf7c18f17551ccb91c0dbafd76b38bd4febbaa0149e0fb9d98549f015e33a39",
+    "constants.ts": "295d504ffbf4cfe11be6d08a5ff023010bf80d1cea4349fd3f9cf46545d10c3f",
+    "services/canvasUtils.ts": "98aca5c84a3573debb594b40bdad9a4f6041d3e5c66e2c3f2a993e1fa9700d04",
+    "components/SettingsPanel.tsx": "2c4a92cd76bce3ef4cc7cd87b6e7f26fdfc5931996146cb67275203fd360749a"
+  },
+  "limits": [
+    "Chrome desktop DPR2; Safari/Firefox/touch not tested",
+    "No GitHub sync, PR, preview or production deployment",
+    "Third iteration still awaits user acceptance"
+  ]
+}

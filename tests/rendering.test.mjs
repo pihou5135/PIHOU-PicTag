@@ -151,12 +151,79 @@ for (const [position, x, y] of [
   });
 }
 
+for (const [position, x, y] of [
+  ['center', 475, 385], ['bottom-right', 913, 745], ['bottom-left', 37, 745],
+  ['top-right', 913, 25], ['top-left', 37, 25],
+]) {
+  test(`image watermark ${position} applies signed fractional offsets without moving text or source`, async () => {
+    await withRuntime(async ({ renderCompositionToCanvas }) => {
+      const mock = fakeCanvas();
+      await renderCompositionToCanvas(mock.canvas, source, {
+        ...base, enableTextWatermark: true, enableImageWatermark: true,
+        watermarkImage: 'offset', watermarkPosition: position,
+        watermarkOffsetX: 18.5, watermarkOffsetY: -42.25,
+      });
+      assert.deepEqual(mock.drawings()[0].args, [source, 0, 0, 1000, 800]);
+      assert.deepEqual(mock.drawings()[1].args, ['水印 Hello', 37, 775]);
+      assert.deepEqual(mock.drawings()[2].args.slice(1), [x + 18.5, y - 42.25, 50, 30]);
+    });
+  });
+}
+
+test('missing and non-finite image offsets fall back independently to zero for old presets', async () => {
+  await withRuntime(async ({ renderCompositionToCanvas }) => {
+    for (const [offsets, x, y] of [
+      [{}, 913, 745],
+      [{ watermarkOffsetX: NaN, watermarkOffsetY: -12 }, 913, 733],
+      [{ watermarkOffsetX: -8.5, watermarkOffsetY: Infinity }, 904.5, 745],
+      [{ watermarkOffsetX: -Infinity, watermarkOffsetY: NaN }, 913, 745],
+      [{ watermarkOffsetX: '20', watermarkOffsetY: null }, 913, 745],
+    ]) {
+      const mock = fakeCanvas();
+      await renderCompositionToCanvas(mock.canvas, source, {
+        ...base, enableImageWatermark: true, watermarkImage: 'offset', ...offsets,
+      });
+      assert.deepEqual(mock.drawings()[1].args.slice(1), [x, y, 50, 30]);
+    }
+  });
+});
+
+test('image offsets are not clamped when a user places the watermark outside the canvas', async () => {
+  await withRuntime(async ({ renderCompositionToCanvas }) => {
+    const mock = fakeCanvas();
+    await renderCompositionToCanvas(mock.canvas, source, {
+      ...base, enableImageWatermark: true, watermarkImage: 'offset', watermarkPosition: 'top-left',
+      watermarkOffsetX: -100, watermarkOffsetY: 900,
+    });
+    assert.deepEqual(mock.drawings()[1].args.slice(1), [-63, 925, 50, 30]);
+  });
+});
+
+for (const [sizeSettings, dimensions, watermarkXY] of [
+  [{ enableResize: true, resizeWidth: 500, resizeHeight: 500, maintainAspectRatio: true }, [500, 400], [430, 336]],
+  [{ enableResize: true, resizeWidth: 300, resizeHeight: 700, maintainAspectRatio: false }, [300, 700], [230, 636]],
+  [{ enableCrop: true, cropWidth: 401.8, cropHeight: 599.9 }, [401, 599], [331, 535]],
+]) {
+  test(`image offsets use actual ${dimensions.join('x')} output coordinates after crop or resize`, async () => {
+    await withRuntime(async ({ renderCompositionToCanvas }) => {
+      const mock = fakeCanvas();
+      await renderCompositionToCanvas(mock.canvas, source, {
+        ...base, ...sizeSettings, enableImageWatermark: true, watermarkImage: 'offset',
+        watermarkOffsetX: 17, watermarkOffsetY: -9,
+      }, 130, -75, 0.6);
+      assert.deepEqual([mock.canvas.width, mock.canvas.height], dimensions);
+      assert.deepEqual(mock.drawings()[1].args.slice(1), [...watermarkXY, 50, 30]);
+    });
+  });
+}
+
 test('thumbnail and full render share crop and watermark coordinates with explicitly scaled shadows', async () => {
   await withRuntime(async ({ renderCompositionToCanvas, fontCalls, imageCalls }) => {
     const full = fakeCanvas(), thumbnail = fakeCanvas();
     const image = { width: 1200, height: 800 };
     const settings = { ...base, enableCrop: true, cropWidth: 900, cropHeight: 600,
-      enableTextWatermark: true, enableImageWatermark: true, watermarkImage: 'data:watermark' };
+      enableTextWatermark: true, enableImageWatermark: true, watermarkImage: 'data:watermark',
+      watermarkOffsetX: -123.5, watermarkOffsetY: 18.25 };
     await Promise.all([
       renderCompositionToCanvas(full.canvas, image, settings, -50, 33, 0.7),
       renderCompositionToCanvas(thumbnail.canvas, image, settings, -50, 33, 0.7, { maxDimension: 300 }),
@@ -164,6 +231,7 @@ test('thumbnail and full render share crop and watermark coordinates with explic
     assert.deepEqual([thumbnail.canvas.width, thumbnail.canvas.height], [300, 200]);
     assert.deepEqual(full.drawings().map(op => op.args), thumbnail.drawings().map(op => op.args));
     assert.deepEqual(full.drawings()[0].args, [image, -20, 53, 840, 560]);
+    assert.deepEqual(full.drawings()[2].args.slice(1), [689.5, 563.25, 50, 30]);
     assert.deepEqual(full.drawings().map(op => op.kind), ['image', 'text', 'image']);
     for (const op of thumbnail.drawings()) assert.deepEqual(op.transform, [1 / 3, 0, 0, 1 / 3, 0, 0]);
     assert.equal(full.drawings()[1].styles.shadowBlur, 6);
@@ -339,11 +407,13 @@ test('export reuses the full composition and encodes only after all layers, in t
   await withRuntime(async ({ renderCompositionToCanvas, processImageWithWatermark, canvases }) => {
     const settings = { ...base, enableCrop: true, cropWidth: 900, cropHeight: 600,
       enableTextWatermark: true, enableImageWatermark: true, watermarkImage: 'export',
+      watermarkOffsetX: 70.5, watermarkOffsetY: -92,
       enableFormatConversion: true, targetFormat: 'image/png' };
     const preview = fakeCanvas();
     await renderCompositionToCanvas(preview.canvas, source, settings, 10, -20, 0.8);
     assert.equal(await processImageWithWatermark(source, settings, 10, -20, 0.8, 'image/jpeg'), 'data:image/png;base64,AA==');
     assert.deepEqual(canvases[0].drawings(), preview.drawings());
+    assert.deepEqual(canvases[0].drawings()[2].args.slice(1), [883.5, 453, 50, 30]);
     assert.deepEqual([canvases[0].canvas.width, canvases[0].canvas.height], [900, 600]);
     assert.deepEqual(canvases[0].operations.at(-1), { kind: 'encode', args: ['image/png', 1] });
     assert.equal(preview.operations.some(op => op.kind === 'encode'), false);

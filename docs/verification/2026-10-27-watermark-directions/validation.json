@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-10-27T14:36:28+08:00",
+  "branch": "codex/live-watermark-preview",
+  "head": "4f507166c812cf58f318a677ff2512daa2684e07",
+  "working_tree": "uncommitted local feature and maintenance changes",
+  "checks": {
+    "node --test tests/*.test.mjs": "82/82 passed",
+    "npm run lint": "passed, exit 0",
+    "npm run build": "passed, exit 0; existing /index.css warning retained",
+    "tests/browser-watermark-position.cjs": "8 scenarios, 3 PNG/JPEG/ZIP downloads passed"
+  },
+  "source_sha256": {
+    "components/SettingsPanel.tsx": "7f56b308953774fbd8d7464217db788fffce0890f8c63357fb784f8562dac6a8",
+    "services/canvasUtils.ts": "98aca5c84a3573debb594b40bdad9a4f6041d3e5c66e2c3f2a993e1fa9700d04",
+    "constants.ts": "295d504ffbf4cfe11be6d08a5ff023010bf80d1cea4349fd3f9cf46545d10c3f",
+    "types.ts": "dcf7c18f17551ccb91c0dbafd76b38bd4febbaa0149e0fb9d98549f015e33a39"
+  },
+  "limits": [
+    "Chrome desktop only; Safari/Firefox/touch untested",
+    "Native select keyboard selection was not confirmed in headless Chrome; arrow keys did not move image and actual option changes were tested with selectOption",
+    "No repeat of full boundary browser suite; renderer unchanged since previous passing regression",
+    "No remote sync or deployment"
+  ]
+}

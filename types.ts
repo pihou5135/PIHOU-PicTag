@@ -12,6 +12,9 @@ export interface TagSettings {
   watermarkOpacity: number;
   watermarkScale: number;
   watermarkPosition: 'center' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  // Offset from the selected image-watermark anchor, in actual output pixels.
+  watermarkOffsetX: number;
+  watermarkOffsetY: number;
   // Toggles
   enableTextWatermark: boolean;
   enableImageWatermark: boolean;
