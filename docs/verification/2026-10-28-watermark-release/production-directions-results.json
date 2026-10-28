@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "checks": [
+    "direction controls are available without signed inputs; all five anchors retain image movement",
+    "four direction buttons move only their own axis, use 1/10/50-pixel distances and accumulate repeated clicks; text stays still",
+    "focused direction buttons support four arrow keys and native Enter/Space; select arrow keys and distance changes never move the watermark",
+    "pressing Up twice visibly resolves overlapping text and image watermarks; reset preserves text and margins",
+    "legacy presets restore zero offsets; fractional saved offsets remain compatible and direction changes save/restore correctly",
+    "image replacement/removal/reselection and mixed dimensions preserve image position; editing performs no image encoding",
+    "resized and cropped outputs use final output pixels; watermark movement leaves source coverage warnings unchanged",
+    "actual PNG/JPEG/ZIP align with preview; crop warning overlays stay out of exports and direction changes invalidate old downloads"
+  ],
+  "measurements": {
+    "nativeSelectKeyboard": "Arrow keys did not move the image; native option keyboard selection was not verified in macOS headless Chrome. Option changes were verified with selectOption.",
+    "overlap": {
+      "beforeTextPixels": 254,
+      "afterTextPixels": 645,
+      "referenceTextPixels": 645
+    },
+    "png": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.30788995227393245,
+      "channelsOver40Fraction": 0.0021984924623115578,
+      "corner": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "jpeg": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.34438997752582007,
+      "channelsOver40Fraction": 0.0013762278730335093,
+      "corner": [
+        0,
+        0,
+        0,
+        255
+      ]
+    }
+  },
+  "downloads": 3,
+  "pageErrors": [],
+  "url": "https://pihou-pictag.netlify.app/",
+  "viewport": "1500x1000",
+  "deviceScaleFactor": 2
+}

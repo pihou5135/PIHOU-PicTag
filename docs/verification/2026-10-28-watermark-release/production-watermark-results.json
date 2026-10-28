@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "checks": [
+    "text, size, color, weight, margins, existing opacity/prefix presets and toggle update before Apply",
+    "image first selection, replacement, remove, toggle, scale, opacity and all five positions render correctly",
+    "delayed font and FileReader completions cannot overwrite latest settings or replacement card; edits never encode",
+    "global watermarks coexist with independent crop/scale/offset and geometric warning overlays",
+    "actual PNG/JPEG and ZIP match preview composition within resampling tolerance; DOM warning stripes stay out of exports",
+    "pending watermark replacement blocks Apply/single/ZIP exports, then invalidates old result and previews latest image",
+    "36 large source images draw only visible/nearby cards, remain <=1024px, and render latest settings when scrolled into view"
+  ],
+  "measurements": {
+    "png": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.10115748339688392,
+      "maxDifference": 92,
+      "channelsOver40Fraction": 0.0003345875104164036,
+      "corner": [
+        32,
+        64,
+        96,
+        255
+      ]
+    },
+    "jpeg": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.5864135375369309,
+      "maxDifference": 92,
+      "channelsOver40Fraction": 0.0004387515466781142,
+      "corner": [
+        31,
+        64,
+        95,
+        255
+      ]
+    },
+    "uncovered": {
+      "width": 600,
+      "height": 600,
+      "meanAbsoluteDifference": 0.5347166106916492,
+      "maxDifference": 255,
+      "channelsOver40Fraction": 0.003959811620918663,
+      "corner": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "batch": {
+      "count": 36,
+      "initiallyUnpainted": 16,
+      "largestBitmapDimension": 398
+    }
+  },
+  "downloads": 4,
+  "pageErrors": [],
+  "url": "https://pihou-pictag.netlify.app/",
+  "viewport": "1500x1000",
+  "deviceScaleFactor": 2
+}

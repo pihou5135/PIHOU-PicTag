@@ -1,0 +1,60 @@
+{
+  "verified_at": "2026-10-28T14:19:47.595610+08:00",
+  "github": {
+    "repository": "https://github.com/pihou5135/PIHOU-PicTag",
+    "branch": "main",
+    "release_commit": "0af66378dd87d20f7fc0f443b75ab05924a41701",
+    "remote_ref_confirmed": true
+  },
+  "netlify": {
+    "site_id": "2f09f9aa-d230-4ee3-b7bc-3aa1689350f7",
+    "site_url": "https://pihou-pictag.netlify.app",
+    "published_deploy": {
+      "id": "6ae193613ec2b457ca6f6943",
+      "state": "ready",
+      "commit_ref": "0af66378dd87d20f7fc0f443b75ab05924a41701",
+      "branch": "main",
+      "context": "production",
+      "published_at": "2026-10-28T06:17:21.814Z",
+      "deploy_ssl_url": "https://main--pihou-pictag.netlify.app"
+    }
+  },
+  "http": {
+    "checked_at": "2026-10-28T14:18:02.819981+08:00",
+    "url": "https://pihou-pictag.netlify.app/",
+    "http_status": 200,
+    "asset": "/assets/index-JYWhhkrf.js",
+    "asset_status": 200,
+    "asset_sha256": "38fb281cff1378ddc0ea44b715e57f16caad3b7d2b6ddd6201c9c13614e9dff5",
+    "feature_markers": [
+      "图片水印向上移动",
+      "图片水印向下移动",
+      "图片水印向左移动",
+      "图片水印向右移动",
+      "重置图片水印位置",
+      "每次移动距离",
+      "data-preview-state"
+    ]
+  },
+  "local_dist_asset_matches_production": true,
+  "production_browser": {
+    "direction_scenarios": 8,
+    "live_preview_scenarios": 7,
+    "actual_downloads": 7,
+    "page_errors": [],
+    "screenshots_visually_reviewed": true
+  },
+  "deployment_path": "Single existing Netlify Git-integrated production deploy after main push; no manual deploy or setting changes.",
+  "rollback": {
+    "deploy_id": "6adf28f54668e79652ae7e4c",
+    "commit": "19df7420b9f5799bcab8e5de0ca90dd448f81e64",
+    "url": "https://app.netlify.com/projects/pihou-pictag/deploys/6adf28f54668e79652ae7e4c"
+  },
+  "limits": [
+    "Desktop Chrome only; Safari/Firefox/touch not rerun.",
+    "Full boundary suite rerun locally before release; production watermark suite covers boundary overlay exclusion and crop interaction.",
+    "Native select keyboard option selection not validated.",
+    "Existing /index.css build warning retained."
+  ],
+  "handoff": "Subsequent documentation/evidence-only commit uses [skip netlify]; runtime release commit stays 0af66378dd87d20f7fc0f443b75ab05924a41701."
+}

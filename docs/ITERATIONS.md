@@ -165,3 +165,12 @@
 - **实际验证**：`node --test tests/*.test.mjs` 82/82；`npm run lint`、`npm run build`退出0；方向Chrome浏览器8组/3次PNG/JPEG/ZIP下载、边界Chrome浏览器10组/5次下载均通过，无页面异常。方向截图目视通过，启动器 `zsh -n`、`git diff --check`通过。仅原 `/index.css` 构建警告；未重跑Safari/Firefox/触屏和原生select键盘选值。
 - **证据**：[发布前汇总](verification/2026-10-28-watermark-release/preflight.json)、[方向回归](verification/2026-10-28-watermark-release/local-directions-results.json)、[边界回归](verification/2026-10-28-watermark-release/local-boundary-results.json)。release_review只读审查未见阻断问题，release_validation完成检查；所有写操作和发布由协调agent统一负责。
 - **当前阶段/下一步**：本条记录提交时尚未推送或完成本次部署。将快进合入main并一次推送，通过既有Git集成触发部署，不新建站点、不改设置或权限、不手动重复部署。随后核对实际commit、ready/published部署和生产浏览器功能，并补充最终证据。回滚基线为部署 `6adf28f54668e79652ae7e4c` / 功能commit `19df7420b9f5799bcab8e5de0ca90dd448f81e64`。
+
+
+### 2026-10-28 · 发布完成与生产验证
+
+- **实际提交/同步**：功能提交 `0af66378dd87d20f7fc0f443b75ab05924a41701`，包含上一轮未提交内容和发布前记录；在main快进合入两项实时预览提交及本提交后一次推送。GitHub `refs/heads/main` 已读取确认相同SHA。无合并冲突、无强推、未开PR，旧副本未修改。
+- **实际部署**：原Netlify Git集成自动创建生产部署 [6ae193613ec2b457ca6f6943](https://app.netlify.com/projects/pihou-pictag/deploys/6ae193613ec2b457ca6f6943)，2026-10-28T06:17:21.814Z（北京时间14:17:21）发布，site的published_deploy确认ready及上述SHA。未另行手动部署、未改站点配置。正式[网站](https://pihou-pictag.netlify.app/)与脚本HTTP200，脚本SHA-256与本地dist一致。
+- **生产验证**：方向8组/3下载、实时预览7组/4下载，合计15组场景、7次实际PNG/JPEG/ZIP下载通过，无页面脚本异常。覆盖实时文本/图片、首次选择/替换/删除、旧异步失效、方向按钮/方向键/步长/复位、预设、裁切与边界辅助层、下载与36图惰性绘制；编辑阶段编码0次，36图初始16张未绘制、最大位图398px。使用隔离桌面Chrome及合成图，截图已目视复核。
+- **最终文档/证据**：更新README和STATUS最新结论，旧“暂停同步/待验收”说明明确保留为历史。新增[生产汇总](verification/2026-10-28-watermark-release/production-release.json)、[方向结果](verification/2026-10-28-watermark-release/production-directions-results.json)、[实时预览结果](verification/2026-10-28-watermark-release/production-watermark-results.json)和本次生产截图。收尾纯文档提交使用`[skip netlify]`，不改变已验证的运行代码；此方式遵循[Netlify跳过部署说明](https://docs.netlify.com/deploy/manage-deploys/manage-deploys-overview/#skip-a-deploy)，不再触发第二次功能部署。
+- **回滚/限制/接力**：回滚点仍是生产部署`6adf28f54668e79652ae7e4c` / 功能commit `19df7420b9f5799bcab8e5de0ca90dd448f81e64`。未执行回滚。未测Safari/Firefox/触屏，原生select键盘选值未确认；本轮完整边界套件在本地重跑，线上覆盖水印与边界联动。原CSS警告/旧并发问题保留。本轮交付完成，所有agent解除占用；用户后续反馈再开新一轮，不能把本次发布许可当永久授权。

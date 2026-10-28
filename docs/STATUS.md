@@ -4,11 +4,19 @@
 
 ## 当前结论
 
-### 2026-10-28 发布进行中
+### 2026-10-28 最新水印功能已正式发布
 
-用户已明确授权“pictag可以更新到最新了，同步github和部署”，解除此前远端写入暂停，本次仅覆盖已完成的实时水印预览及图片水印方向移动。协调 agent `/root` 负责最终检查、维护记录、提交/合入 main、推送及现有 Netlify Git 部署验证；`release_review` 只读复核代码、待提交资料与旧副本保护，无文件写入范围。起始分支 `codex/live-watermark-preview` / HEAD `4f507166c812cf58f318a677ff2512daa2684e07`，接手时未提交文件与上一轮交付清单一致。以下待验收/暂停同步内容为发布前历史状态，以此条最新授权为准；完成后更新为真实发布结果。不新增功能、不改站点设置、不沿用为以后自动发布授权。
+用户本次明确授权“pictag可以更新到最新了，同步github和部署”，解除此前同步暂停。本轮第二/三轮功能已同步并发布，线上已验证文字与图片水印实时预览，以及图片水印上下左右按钮、1/10/50像素步长、方向键和复位。未添加额外功能，也未修改站点设置、凭据或访问权限。本次发布授权不延伸为以后的自动发布许可。
 
-发布前核对：远端 main 仍为 `cdba1d1`，无上游新增提交；Netlify现有站点绑定本仓库main，构建 `npm run build`、输出 `dist`、stop_builds=false。82/82单测、类型检查、构建、方向浏览器8组/3下载、边界浏览器10组/5下载全部通过，浏览器无脚本异常。旧副本HEAD、状态及两项配置哈希保持原样。证据：[发布前汇总](verification/2026-10-28-watermark-release/preflight.json)、[方向回归](verification/2026-10-28-watermark-release/local-directions-results.json)、[边界回归](verification/2026-10-28-watermark-release/local-boundary-results.json)。尚待本次提交推送、Git自动部署和线上验证。
+- **正式站**：[pihou-pictag.netlify.app](https://pihou-pictag.netlify.app/)。GitHub [main](https://github.com/pihou5135/PIHOU-PicTag/tree/main) 已包含功能提交 [0af66378dd87d20f7fc0f443b75ab05924a41701](https://github.com/pihou5135/PIHOU-PicTag/commit/0af66378dd87d20f7fc0f443b75ab05924a41701)，从原main快进合入，无冲突、无强推、无PR。
+- **生产部署**：[6ae193613ec2b457ca6f6943](https://app.netlify.com/projects/pihou-pictag/deploys/6ae193613ec2b457ca6f6943)，state=ready，commit_ref=`0af66378dd87d20f7fc0f443b75ab05924a41701`，2026-10-28 14:17:21（北京时间）发布。已由site的published_deploy确认；使用原Git集成，只触发一次功能部署，没有手动重复发布。
+- **绑定**：Netlify `2f09f9aa-d230-4ee3-b7bc-3aa1689350f7` / `pihou-pictag` → `pihou5135/PIHOU-PicTag` 的main；构建 `npm run build`，输出dist。正式HTML和脚本HTTP200；线上 `/assets/index-JYWhhkrf.js` SHA-256与本地已验证构建完全一致。
+- **验证**：发布前82/82单测、类型检查、构建通过；Chrome方向8组/3次下载及完整边界10组/5次下载通过。发布后在正式域名跑方向8组/3次、实时预览7组/4次，合计15组/7次实际PNG/JPEG/ZIP下载，均无页面脚本异常，截图已目视核对。文字/图片设置、快速替换与移除、裁切联动、方向移动、告警不进入导出及36图惰性绘制均覆盖。
+- **回滚点**：上一生产部署 [6adf28f54668e79652ae7e4c](https://app.netlify.com/projects/pihou-pictag/deploys/6adf28f54668e79652ae7e4c)，对应 `19df7420b9f5799bcab8e5de0ca90dd448f81e64`。没有执行回滚。
+- **Git/接力**：本地工作分支已切回main，原功能分支保留。最新代码已推送；收尾仅提交README/STATUS/ITERATIONS和发布证据，使用`[skip netlify]`避免重复部署，故GitHub最新纯文档HEAD与运行时commit可能不同。实时HEAD/干净状态以 `git status`、`git log`为准。`release_review`只读复核、`release_validation`验证和协调agent发布均已完成，无进行中文件占用。下一步收集用户线上反馈，新功能重新按用户流程开发/验收/授权发布。
+- **保护/限制**：旧副本HEAD、未提交状态及两项配置哈希保持原样；PROJECT.local.md仍被忽略。现有本地4173服务在发布前返回200，未重启或关闭。未测Safari/Firefox/触屏；原生select键盘选值仍未确认。完整边界套件本轮仅本地重跑，线上测试覆盖其裁切/提示不导出联动。原`/index.css`构建警告和旧补图并发问题未扩展修复。侧栏注册状态仍见文末。
+
+证据：[发布前汇总](verification/2026-10-28-watermark-release/preflight.json)、[生产部署/HTTP汇总](verification/2026-10-28-watermark-release/production-release.json)、[本地方向](verification/2026-10-28-watermark-release/local-directions-results.json)、[本地边界](verification/2026-10-28-watermark-release/local-boundary-results.json)、[生产方向](verification/2026-10-28-watermark-release/production-directions-results.json)、[生产实时预览](verification/2026-10-28-watermark-release/production-watermark-results.json)、[方向截图](verification/2026-10-28-watermark-release/production-directions.png)、[实时预览截图](verification/2026-10-28-watermark-release/production-live-preview.png)、[裁切截图](verification/2026-10-28-watermark-release/production-crop.png)。
 
 ## 2026-10-27 本地交付记录（历史）
 
